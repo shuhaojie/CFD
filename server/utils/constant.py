@@ -99,9 +99,9 @@ class BUSINESS(object):
 
 
 class TaskStatus(object):
-    PENDING = 0  # 任务加载进来
-    SUCCEED = 1  # 任务成功
-    FAIL = 2  # 任务失败
+    PENDING = 'pending'  # 任务加载进来
+    SUCCESS = 'success'  # 任务成功
+    FAIL = 'fail'  # 任务失败
 
 
 class MyConstant(object):

@@ -7,9 +7,8 @@ from fastapi.responses import JSONResponse
 from dbs.database import db_init
 from logs import log_init, api_log
 from middleware import middleware_init
-from watcher.task import watcher_init
-from routers import router_init
 from utils.common_util import write_log
+from routers import router_init
 from utils.custom_openapi import init_openapi
 from fastapi_utils.tasks import repeat_every
 
@@ -23,9 +22,8 @@ def conf_init(app):
         app.debug = False
 
 
-@repeat_every(seconds=10)
 async def start_event():
-    await watcher_init()
+    await write_log(msg='系统启动')
 
 
 def create_app():

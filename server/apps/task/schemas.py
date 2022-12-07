@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from pydantic.typing import Literal
 from typing import Optional, List
 from copy import copy
 from fastapi import Query
@@ -12,11 +13,11 @@ class StartResponseSchema(BaseResponse):
     task_id: Optional[str] = Field('', title="task_id")
 
 
+# https://stackoverflow.com/a/61248551/10844937
 class SendDataRequestSchema(BaseModel):
     task_id: str
     md5: str
-    username: Optional[str] = Field(title="用户名")
-    hardware: str
+    hardware: Literal['low', 'medium', 'high']
 
 
 class ReverseDataRequestSchema(BaseModel):

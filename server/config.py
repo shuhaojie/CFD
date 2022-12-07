@@ -69,6 +69,7 @@ class Config(Settings):
 
     # cfd监控路径
     MONITOR_PATH: Optional[str] = Field(None, env="MONITOR_PATH")
+    PREPARE_PATH: Optional[str] = Field(None, env="PREPARE_PATH")
     ARCHIVE_PATH: Optional[str] = Field(None, env="ARCHIVE_PATH")
     FILE_DIFF_TIME: Optional[str] = Field(None, env="FILE_DIFF_TIME")
 
