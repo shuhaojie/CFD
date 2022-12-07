@@ -3,7 +3,7 @@
 ## 1. 流程图
 
 <div align=center>
-    <img alt="#" src="docs/CFD流程图.png" width=568>
+    <img alt="#" src="./docs/CFD流程图.png" width=568>
 </div>
 
 ## 2. aerich迁移
