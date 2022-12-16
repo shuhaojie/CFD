@@ -9,22 +9,22 @@ from commons.base_model import AbstractBaseModel
 class Uknow(AbstractBaseModel):
     task_id = fields.CharField(max_length=MyConstant.MAX_LENGTH, description='任务id')
     create_time = fields.DatetimeField(description='创建时间', auto_now_add=True)
-    task_name = fields.CharField(description='任务名称', max_length=MyConstant.MAX_LENGTH, default=task_id)
-    username = fields.CharField(description="用户名", max_length=MyConstant.MAX_LENGTH)
+    task_name = fields.CharField(description='任务名称', max_length=MyConstant.MAX_LENGTH, null=True)
+    username = fields.CharField(description="用户名", max_length=MyConstant.MAX_LENGTH, null=True)
     mac_address = fields.CharField(description="MAC地址", max_length=MyConstant.MAX_LENGTH)
     md5 = fields.CharField(description="文件md5值", max_length=MyConstant.MAX_LENGTH)
 
     # 跑Icem任务的硬件配置
     icem_hardware_level = fields.CharField(description="Icem硬件配置等级", max_length=MyConstant.MAX_LENGTH)
     # 跑 Icem bash的时候需要的参数, 提供给bash脚本, send_config会给过来
-    icem_params = fields.TextField(description="Icem参数")
+    icem_params = fields.TextField(description="Icem参数", null=True)
     # GEO_EXTRACT_CURVES = fields.FloatField()
     # GEO_SET_FAMILY_PARAMS = fields.FloatField()
 
     # 跑Fluent任务的硬件配置
     fluent_hardware_level = fields.CharField(description="Fluent硬件配置等级", max_length=MyConstant.MAX_LENGTH)
     # 跑Fluent bash的时候额外需要的参数, 提供给bash脚本
-    fluent_params = fields.TextField(description="Fluent参数")
+    fluent_params = fields.TextField(description="Fluent参数", null=True)
     # prof_number = fields.IntField(description="prof文件编号")
 
     # 任务整体排队号
@@ -83,7 +83,7 @@ class Uknow(AbstractBaseModel):
 class IcemTask(AbstractBaseModel):
     task_id = fields.CharField(max_length=MyConstant.MAX_LENGTH,
                                description='任务id')
-    # 共五种: queue, schedule, pending, success, fail
+    # 共六种: queue, pending, schedule, dealing, success, fail
     task_status = fields.CharField(max_length=MyConstant.MAX_LENGTH,
                                    description='任务状态',
                                    null=True)
@@ -185,6 +185,10 @@ class FluentHardware(Model):
 class FluentProf(Model):
     prof_name = fields.CharField(description="prof文件名称", pk=True, max_length=MyConstant.MAX_LENGTH)
     prof_path = fields.CharField(description="prof文件路径", max_length=MyConstant.MAX_LENGTH)
+
+    class Meta:
+        table = "fluent_prof"
+        table_description = "fluent prof文件对应表"
 
 
 class Token(Model):
