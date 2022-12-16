@@ -20,7 +20,7 @@ def upload_file(task_id):
     token = get_token()
     files = {
         'file': open(abs_path, 'rb'),
-        'key': (None, 'dir1/'),
+        'key': (None, f'dir1/{task_id}.zip'),
         'storage_id': (None, '-1'),
     }
     headers = {

@@ -1,0 +1,83 @@
+{
+	"cluster": {
+		"request": {
+			"deployMode": "ON_DEMAND",
+			"partitions": [{
+				"id": null,
+				"count": 1,
+				"lifecycle": "NORMAL",
+				"lifecycleQuantity": 1,
+				"htEnabled": true,
+				"rootVolumeSize": null,
+				"instanceTypeSkus": [{
+					"fastoneModel": "b1.c1.24",
+					"fastoneFamily": "b1.c1",
+					"fastoneCategory": "计算优化",
+					"fastoneCategoryEn": "Compute Optimized",
+					"vCpu": 24,
+					"memory": 48,
+					"cpuModel": "Intel Xeon Icelake 8350C 32C(2.6GHz) (2.6GHz GHz)",
+					"networkBandwidth": "8",
+					"price": 4.8048,
+					"priceUnit": "元/小时",
+					"monthPrice": 2164.9114,
+					"monthPriceUnit": "元/月",
+					"yearPrice": 21562.5175,
+					"yearPriceUnit": "元/年",
+					"storageUnit": "GiB",
+					"networkBandwidthUnit": "Gbps",
+					"cpuFrequency": "2.6GHz",
+					"systemPlatform": "LINUX",
+					"skuId": "791e5e2f-9e81-3f2f-911e-5420c4b1e6e4",
+					"fsInstanceType": "b1.c1.24"
+				}],
+				"name": "partition9638"
+			}],
+			"remoteAccesses": []
+		}
+	},
+	"appId": 3,
+	"inputs": [{
+		"id": null,
+		"createdBy": 5,
+		"updatedBy": 5,
+		"createdAt": "2022-12-13T08:11:22.216274Z",
+		"modifiedAt": "2022-12-13T08:11:22.216274Z",
+		"deleted": false,
+		"inputId": "file",
+		"description": "压缩文件(.zip)",
+		"type": "FILE",
+		"name": "file",
+		"required": true,
+		"symbols": [],
+		"new": false,
+		"value": "/icem.zip",
+		"displayValue": "icem.zip"
+	}, {
+		"id": null,
+		"createdBy": 5,
+		"updatedBy": 5,
+		"createdAt": "2022-12-13T08:11:22.217107Z",
+		"modifiedAt": "2022-12-13T08:11:22.217107Z",
+		"deleted": false,
+		"inputId": "md5code",
+		"description": "压缩文件的校验码",
+		"type": "STRING",
+		"name": "md5code",
+		"required": true,
+		"symbols": [],
+		"new": false,
+		"value": "4f4984c367d9b86479f7aa6ef718bef6"
+	}],
+	"name": "ansys-icem-2019-zip-job-on-2022-12-16-10-59-37",
+	"options": [{
+		"name": "LOG_LEVEL",
+		"value": "verbose"
+	}, {
+		"name": "STOP_ON_ERROR",
+		"value": "false"
+	}, {
+		"name": "TRASH_INTERMEDIATE",
+		"value": "true"
+	}]
+}

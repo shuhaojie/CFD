@@ -1,0 +1,126 @@
+{
+	"cluster": {
+		"request": {
+			"deployMode": "ON_DEMAND",
+			"partitions": [{
+				"id": null,
+				"count": 1,
+				"lifecycle": "NORMAL",
+				"lifecycleQuantity": 1,
+				"htEnabled": true,
+				"rootVolumeSize": null,
+				"instanceTypeSkus": [{
+					"fastoneModel": "b1.c1.48",
+					"fastoneFamily": "b1.c1",
+					"fastoneCategory": "计算优化",
+					"fastoneCategoryEn": "Compute Optimized",
+					"vCpu": 48,
+					"memory": 96,
+					"cpuModel": "Intel Xeon Icelake 8350C 32C(2.6GHz) (2.6GHz GHz)",
+					"networkBandwidth": "14",
+					"price": 9.6096,
+					"priceUnit": "元/小时",
+					"monthPrice": 4329.8228,
+					"monthPriceUnit": "元/月",
+					"yearPrice": 43125.035,
+					"yearPriceUnit": "元/年",
+					"storageUnit": "GiB",
+					"networkBandwidthUnit": "Gbps",
+					"cpuFrequency": "2.6GHz",
+					"systemPlatform": "LINUX",
+					"skuId": "5d031efd-cd76-3d9f-950d-7082d136be68",
+					"fsInstanceType": "b1.c1.48"
+				}],
+				"name": "partition7020"
+			}],
+			"remoteAccesses": []
+		}
+	},
+	"appId": 5,
+	"inputs": [{
+		"id": null,
+		"createdBy": 5,
+		"updatedBy": 5,
+		"createdAt": "2022-12-13T06:28:23.848171Z",
+		"modifiedAt": "2022-12-13T06:28:23.848171Z",
+		"deleted": false,
+		"inputId": "input_file",
+		"description": "fluent输入压缩文件(*.zip)",
+		"type": "FILE",
+		"name": "输入文件",
+		"required": true,
+		"symbols": [],
+		"new": false,
+		"value": "/cfd_case4test/case_cfd.zip",
+		"displayValue": "case_cfd.zip"
+	}, {
+		"id": null,
+		"createdBy": 5,
+		"updatedBy": 5,
+		"createdAt": "2022-12-13T06:28:23.849487Z",
+		"modifiedAt": "2022-12-13T06:28:23.849487Z",
+		"deleted": false,
+		"inputId": "input",
+		"description": "其中求解器为 2d, 3d, 2ddp, 3ddp中的一个",
+		"type": "ENUM",
+		"name": "求解器",
+		"required": true,
+		"symbols": ["2d", "3d", "2ddp", "3ddp"],
+		"new": false,
+		"options": [{
+			"name": "2d",
+			"code": "2d"
+		}, {
+			"name": "3d",
+			"code": "3d"
+		}, {
+			"name": "2ddp",
+			"code": "2ddp"
+		}, {
+			"name": "3ddp",
+			"code": "3ddp"
+		}],
+		"value": "3d"
+	}, {
+		"id": null,
+		"createdBy": 5,
+		"updatedBy": 5,
+		"createdAt": "2022-12-13T06:28:23.855408Z",
+		"modifiedAt": "2022-12-13T06:28:23.855408Z",
+		"deleted": false,
+		"inputId": "np",
+		"description": "运行fluent应用的进程数量",
+		"type": "NUMBER",
+		"name": "并发数",
+		"required": true,
+		"value": 42,
+		"symbols": [],
+		"new": false
+	}, {
+		"id": null,
+		"createdBy": 5,
+		"updatedBy": 5,
+		"createdAt": "2022-12-13T06:28:23.85588Z",
+		"modifiedAt": "2022-12-13T06:28:23.85588Z",
+		"deleted": false,
+		"inputId": "md5code",
+		"description": "md5校验码",
+		"type": "STRING",
+		"name": "md5校验码",
+		"required": true,
+		"symbols": [],
+		"new": false,
+		"value": "aaaa"
+	}],
+	"name": "ansys-fluent-2019-zip-job-on-2022-12-16-11-44-26",
+	"options": [{
+		"name": "LOG_LEVEL",
+		"value": "verbose"
+	}, {
+		"name": "STOP_ON_ERROR",
+		"value": "false"
+	}, {
+		"name": "TRASH_INTERMEDIATE",
+		"value": "true"
+	}]
+}

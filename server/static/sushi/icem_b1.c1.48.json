@@ -1,0 +1,83 @@
+{
+	"cluster": {
+		"request": {
+			"deployMode": "ON_DEMAND",
+			"partitions": [{
+				"id": null,
+				"count": 1,
+				"lifecycle": "NORMAL",
+				"lifecycleQuantity": 1,
+				"htEnabled": true,
+				"rootVolumeSize": null,
+				"instanceTypeSkus": [{
+					"fastoneModel": "b1.c1.48",
+					"fastoneFamily": "b1.c1",
+					"fastoneCategory": "计算优化",
+					"fastoneCategoryEn": "Compute Optimized",
+					"vCpu": 48,
+					"memory": 96,
+					"cpuModel": "Intel Xeon Icelake 8350C 32C(2.6GHz) (2.6GHz GHz)",
+					"networkBandwidth": "14",
+					"price": 9.6096,
+					"priceUnit": "元/小时",
+					"monthPrice": 4329.8228,
+					"monthPriceUnit": "元/月",
+					"yearPrice": 43125.035,
+					"yearPriceUnit": "元/年",
+					"storageUnit": "GiB",
+					"networkBandwidthUnit": "Gbps",
+					"cpuFrequency": "2.6GHz",
+					"systemPlatform": "LINUX",
+					"skuId": "5d031efd-cd76-3d9f-950d-7082d136be68",
+					"fsInstanceType": "b1.c1.48"
+				}],
+				"name": "partition3669"
+			}],
+			"remoteAccesses": []
+		}
+	},
+	"appId": 3,
+	"inputs": [{
+		"id": null,
+		"createdBy": 5,
+		"updatedBy": 5,
+		"createdAt": "2022-12-13T08:11:22.216274Z",
+		"modifiedAt": "2022-12-13T08:11:22.216274Z",
+		"deleted": false,
+		"inputId": "file",
+		"description": "压缩文件(.zip)",
+		"type": "FILE",
+		"name": "file",
+		"required": true,
+		"symbols": [],
+		"new": false,
+		"value": "/icem.zip",
+		"displayValue": "icem.zip"
+	}, {
+		"id": null,
+		"createdBy": 5,
+		"updatedBy": 5,
+		"createdAt": "2022-12-13T08:11:22.217107Z",
+		"modifiedAt": "2022-12-13T08:11:22.217107Z",
+		"deleted": false,
+		"inputId": "md5code",
+		"description": "压缩文件的校验码",
+		"type": "STRING",
+		"name": "md5code",
+		"required": true,
+		"symbols": [],
+		"new": false,
+		"value": "dfasdfadsf"
+	}],
+	"name": "ansys-icem-2019-zip-job-on-2022-12-16-11-20-35",
+	"options": [{
+		"name": "LOG_LEVEL",
+		"value": "verbose"
+	}, {
+		"name": "STOP_ON_ERROR",
+		"value": "false"
+	}, {
+		"name": "TRASH_INTERMEDIATE",
+		"value": "true"
+	}]
+}

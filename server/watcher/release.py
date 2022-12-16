@@ -3,6 +3,7 @@
 本脚本会一直对release路径下的文件进行不间断扫描, 有文件过来时会对文件进行判断，如果文件执行完成, 会将文件移入到archive下
 """
 import os
+import json
 import sys
 import time
 import requests
@@ -42,10 +43,10 @@ async def run():
                 # 2. 文件已经稳定, 就可以开始发请求了
                 # 1) 上传数据
                 base_url = "http://120.48.150.243/fa/api/v0/upload/"
-                abs_path = os.path.join(r'C:\workspaces\data\prepare', task_id + ".zip")
+                abs_path = os.path.join(configs.PREPARE_PATH, task_id + ".zip")
                 files = {
                     'file': open(abs_path, 'rb'),
-                    'key': (None, 'dir1/'),
+                    'key': (None, f'dir1/{task_id}.zip'),
                     'storage_id': (None, '-1'),
                 }
                 requests.post(
@@ -53,29 +54,36 @@ async def run():
                     files=files,
                     headers=headers
                 )
+                # 注: 当前速石并不支持用api的形式先去对md5进行校验，需要后续版本，这部分代码暂时comment out
                 # 2) 校验文件是否稳定
                 query = await IcemTask.filter(task_id=task_id).first()
                 icem_md5 = query.icem_md5
-                file_complete = False
-                while not file_complete:
-                    base_url = "http://120.48.150.243/fa/api/v0/upload/"
-                    params = {'md5': icem_md5}
-                    r = requests.post(base_url, json=params, headers=headers)
-                    complete = r.json()['complete']
-                    if complete:
-                        file_complete = True
-                    else:
-                        time.sleep(30)
+                # file_complete = False
+                # while not file_complete:
+                #     base_url = "http://120.48.150.243/fa/api/v0/upload/"
+                #     params = {'md5': icem_md5}
+                #     r = requests.post(base_url, json=params, headers=headers)
+                #     complete = r.json()['complete']
+                #     if complete:
+                #         file_complete = True
+                #     else:
+                #         time.sleep(30)
 
                 # 3) 再发申请硬件资源的请求
 
-                base_url = 'http://127.0.0.1:8000/reverse_status'
-                file_path = f'/user/fastone/admin/'
-                params = {'md5': icem_md5, 'config': 'medium', 'file_path': file_path}
+                base_url = 'http://120.48.150.243/api/v1/jobs'
+                # 目前暂时用这个固定配置, 这个是根据用户选择的配置来的
+                f = open('./static/sushi/icem_b1.c1.32.json', encoding='UTF-8')
+                json_data = json.load(f)
+                json_data['inputs'][0]['value'] = f'/{task_id}_icem.zip'
+                json_data['inputs'][1]['value'] = icem_md5
+                json_data['name'] = task_id
                 # https://stackoverflow.com/a/22567429/10844937
-                r = requests.post(base_url, json=params, headers=headers)
+                r = requests.post(base_url, json=json_data, headers=headers)
                 job_id = r.json()['job_id']
                 await IcemTask.filter(task_id=task_id).update(job_id=job_id)
+
+                # 4) 对任务状态进行轮询
 
 if __name__ == "__main__":
     run_async(run())
