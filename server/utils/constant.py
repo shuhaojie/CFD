@@ -99,9 +99,16 @@ class BUSINESS(object):
 
 
 class TaskStatus(object):
-    PENDING = 'pending'  # 任务加载进来
-    SUCCESS = 'success'  # 任务成功
-    FAIL = 'fail'  # 任务失败
+    QUEUE = '任务排队中'  # 并发数过高时, 需要排队
+    PENDING = '任务执行中'  # 任务加载进来
+    SUCCESS = '执行成功'  # 任务成功
+    FAIL = '执行失败'  # 任务失败
+
+
+class DataStatus(object):
+    PENDING = '数据上传中'  # 任务加载进来
+    SUCCESS = '数据上传成功'  # 任务成功
+    FAIL = '数据上传失败'  # 任务失败
 
 
 class MyConstant(object):
