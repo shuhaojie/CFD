@@ -1,11 +1,13 @@
 import os
 import uuid
-from fastapi import Depends, File, UploadFile
+from datetime import datetime
+from pydantic import Field
+from fastapi import Depends, UploadFile
 from fastapi_restful.inferring_router import InferringRouter
 from fastapi_restful.cbv import cbv
 
 from commons.schemas import BaseResponse, get_serialize_pydantic
-from apps.models import Task
+from apps.models import Uknow, IcemTask, FluentTask
 from .schemas import StartResponseSchema, SendDataRequestSchema, TaskListRequest
 from config import configs
 
@@ -16,19 +18,45 @@ sushi_router = InferringRouter(prefix="", tags=['Sushi'])
 
 @uknow_router.post("/fetch_task_id", name="获取task_id", response_model=StartResponseSchema)
 async def fetch_task_id():
-    task_id = str(uuid.uuid1())
+    now_time = datetime.now()
+    query = await Uknow.filter(create_time__year=now_time.year,
+                               create_time__month=now_time.month,
+                               create_time__day=now_time.day,
+                               create_time__hour=now_time.hour,
+                               create_time__minute=now_time.minute,
+                               create_time__second=now_time.second)
+    index = len(query) + 1
+    if index < 10:
+        index = f'0{str(index)}'
+    else:
+        index = f'{str(index)}'
+
+    task_id = f'{now_time.year}{now_time.month}{now_time.day}' \
+              f'{now_time.hour}{now_time.minute}{now_time.second}0{index}'
     return {'code': 200, "message": "获取task_id成功", 'status': True, "task_id": task_id}
 
 
 @uknow_router.post("/send_configs", name="发送配置", response_model=BaseResponse)
 async def send_configs(query_data: SendDataRequestSchema):
-    md5 = query_data.md5
-    task_id = query_data.task_id
-    hardware = query_data.hardware
-    await Task.create(
+    data = query_data.dict()
+    task_id = data.get("task_id", None)
+    md5 = data.get("md5", None)
+    mac_address = data.get("mac_address", None)
+    task_name = data.get("task_name", None)
+    icem_hardware_level = data.get("icem_hardware_level", None)
+    fluent_hardware_level = data.get("fluent_hardware_level", None)
+    icem_params = data.get("icem_params", None)
+    fluent_params = data.get("fluent_params", None)
+    # 查看当前的数据条数, 如果是条数少于10, is_await就会False, 否则要排队
+    await Uknow.create(
         task_id=task_id,
         md5=md5,
-        hardware=hardware,
+        mac_address=mac_address,
+        task_name=task_name,
+        icem_hardware_level=icem_hardware_level,
+        fluent_hardware_level=fluent_hardware_level,
+        icem_params=icem_params,
+        fluent_params=fluent_params,
     )
     return {'code': 200, "message": "", 'status': True}
 
@@ -50,14 +78,9 @@ async def upload(file: UploadFile):
 
 @cbv(uknow_router)
 class TaskListCBV:
-    response_model = get_serialize_pydantic(Task)
+    response_model = get_serialize_pydantic(Uknow)
 
     @uknow_router.get("/reverse_status", name="轮询任务状态", response_model=response_model)
     async def reverse_status(self, query_data: dict = Depends(TaskListRequest.param)):
         response = await TaskListRequest().get(**query_data)
         return response
-
-
-@sushi_router.post("/login", name="demo")
-async def login():
-    return {'code': 200, "message": "api for demo", 'status': True, "token": "abc"}
