@@ -1,5 +1,6 @@
 """
-和UKnow进行交互的核心代码
+和UKnow进行交互的核心代码:
+本脚本会一直对receive路径下的文件进行不间断扫描, 有文件过来时会对文件进行判断，如果文件通过验证, 会将文件移入到release下
 """
 
 import hashlib
@@ -7,20 +8,23 @@ import os
 import sys
 import time
 import shutil
+import zipfile
 from tortoise import Tortoise, run_async
-
+from tortoise.functions import Max
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
 from config import configs  # noqa
-from apps.models import Task, Uknow, Queue  # noqa
+from apps.models import Uknow, IcemTask, Token
 from dbs.database import TORTOISE_ORM  # noqa
+from .utils import get_token
 
 
 async def run():
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
-    monitor_path, prepare_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(configs.PREPARE_PATH)
+    monitor_path, prepare_path, archive_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(
+        configs.PREPARE_PATH), r"{}".format(configs.ARCHIVE_PATH)
     file_list = os.listdir(monitor_path)
     if len(file_list) == 0:
         print(f"No files in {monitor_path} currently.")
@@ -42,31 +46,51 @@ async def run():
                     uknow_data_status = 'success'
                 else:
                     uknow_data_status = 'fail'
-            await Uknow.filter(task_id=task_id).update(status=uknow_data_status)
 
             # 2. 根据状态做不同的处理
-            # 1) 数据完整: 将数据移动到prepare下，准备移动到速石
-            # a. 如果任务数小于阈值, Task数据库插入一条记录
-            # b. 如果任务数大于阈值, TaskQueue插入一条记录
+            # 1) 校验:
+            # a. 更新data_status
+            # b. 将数据移动到prepare路径下
+            # c. 将zip包进行解压
+            # d. 压缩Icem文件夹
+            # e. 计算icem的md5值
+            # f. IcemTask新增一条记录, 入库task_id和md5
             if uknow_data_status == 'success':
+                await Uknow.filter(task_id=task_id).update(status=uknow_data_status)
                 shutil.move(abs_path, prepare_path)
-                query = await Task.filter(status='pending')
-                if len(query) < 2:
-                    await Task.create(
-                        task_id=task_id,
-                    )
-                else:
-                    query = await Queue.filter()
-                    await Queue.create(
-                        task_id=task_id,
-                        queue_number=len(query) + 1
-                    )
-            # 2) 数据不完整: 数据移动到失败的路径下
+
+                path_to_zip_file = os.path.join(prepare_path, f)
+                directory_to_extract_to = path_to_zip_file.split('.')[0]
+                with zipfile.ZipFile(abs_path, 'r') as zip_ref:
+                    zip_ref.extractall(directory_to_extract_to)
+
+                dir_name = os.path.join(directory_to_extract_to, 'icem')
+                output_filename = f'{dir_name}.zip'
+                shutil.make_archive(output_filename, 'zip', dir_name)
+
+                with open(dir_name, "rb") as f1:
+                    current_bytes = f1.read()
+                    a_hash = hashlib.md5(current_bytes).hexdigest()
+                await IcemTask.create(task_id=task_id, icem_md5=a_hash)
+            # 2) 校验不通过:
+            # a. 数据移动到失败的路径下
+            # b. 删掉Release中的数据记录
             elif uknow_data_status == 'fail':
-                pass
+                shutil.move(abs_path, archive_path)
+                await Uknow.filter(task_id=task_id).update(data_status='fail', status_code='数据不完整')
             # 3) 数据还没传完, 等待传完即可
             else:
                 pass
+
+            # 1. 对并发数进行判断
+            query = await IcemTask.filter()
+            # 如果并发数小于10
+            if len(query) < 10:
+                token = get_token()
+                await Token.update_or_create(access_token=token)
+            else:
+                max_queue_number = await IcemTask.all().annotate(data=Max('await_number')).first()
+                await IcemTask.filter(task_id=task_id).update(await_number=max_queue_number.await_number+1)
 
 
 if __name__ == "__main__":
