@@ -12,10 +12,10 @@ from tortoise import Tortoise, run_async
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 
-from config import configs  # noqa
+from config import configs
 from apps.models import Uknow, IcemTask
-from dbs.database import TORTOISE_ORM  # noqa
-from watcher.utils import get_token  # noqa
+from dbs.database import TORTOISE_ORM
+from watcher.utils import get_token, download_file
 
 
 async def run():
@@ -84,6 +84,22 @@ async def run():
                 await IcemTask.filter(task_id=task_id).update(job_id=job_id)
 
                 # 4) 对任务状态进行轮询
+                base_url = f'http://120.48.150.243/api/v1/jobs/{job_id}'
+                r = requests.get(base_url, headers=headers)
+                state = r.json()['state']
+                # 任务成功，取回fluent.msh，并移动到prepare路径下
+                if state == 'COMPLETE':
+                    base_url = f'http://120.48.150.243/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
+                    file_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
+                    download_file(base_url, file_path)
+                elif state == 'FAILED':
+                    base_url = f'http://120.48.150.243/fa/api/v0/download/jobs/job-{job_id}/log/stderr.txt'
+                    file_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
+                    download_file(base_url, file_path)
+                    # 将日志上传到minio
+                else:
+                    pass
+
 
 if __name__ == "__main__":
     run_async(run())

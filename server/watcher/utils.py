@@ -31,8 +31,31 @@ def upload_file(task_id):
         files=files,
         headers=headers
     )
-    print(r.json())
+    return r.json()
+
+
+def download_file(url: str, dest_folder: str):
+    if not os.path.exists(dest_folder):
+        os.makedirs(dest_folder)  # create folder if it does not exist
+
+    filename = url.split('/')[-1].replace(" ", "_")  # be careful with file names
+    file_path = os.path.join(dest_folder, filename)
+    token = get_token()
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+    r = requests.get(url, stream=True, headers=headers)
+    if r.ok:
+        with open(file_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024 * 8):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+                    os.fsync(f.fileno())
+    else:  # HTTP status code 4XX/5XX
+        print("Download failed: status code {}\n{}".format(r.status_code, r.text))
 
 
 if __name__ == '__main__':
-    upload_file('aaa')
+    download_file('http://120.48.150.243/fa/api/v0/download/jobs/job-91/output/output/fluent.msh',
+                  r'C:\\workspaces\\data\\prepare')
