@@ -26,13 +26,13 @@ async def fetch_task_id():
                                create_time__minute=now_time.minute,
                                create_time__second=now_time.second)
     index = len(query) + 1
-    if index < 10:
-        index = f'0{str(index)}'
-    else:
-        index = f'{str(index)}'
-
-    task_id = f'{now_time.year}{now_time.month}{now_time.day}' \
-              f'{now_time.hour}{now_time.minute}{now_time.second}0{index}'
+    index = f'0{str(index)}' if index < 10 else f'{str(index)}'
+    month = f'0{str(now_time.month)}' if now_time.month < 10 else f'{str(now_time.month)}'
+    day = f'0{str(now_time.day)}' if now_time.day < 10 else f'{str(now_time.day)}'
+    hour = f'0{str(now_time.hour)}' if now_time.hour < 10 else f'{str(now_time.hour)}'
+    minute = f'0{str(now_time.minute)}' if now_time.minute < 10 else f'{str(now_time.minute)}'
+    second = f'0{str(now_time.second)}' if now_time.second < 10 else f'{str(now_time.second)}'
+    task_id = f'{now_time.year}{month}{day}{hour}{minute}{second}0{index}'
     return {'code': 200, "message": "获取task_id成功", 'status': True, "task_id": task_id}
 
 
