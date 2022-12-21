@@ -192,7 +192,7 @@ class FluentProf(Model):
 
 
 class Token(Model):
-    access_token = fields.CharField(description="文件md5值", max_length=MyConstant.MAX_LENGTH)
+    access_token = fields.CharField(description="文件md5值", max_length=1024)
     expire_time = fields.DatetimeField(description='token过期时间')
 
 
