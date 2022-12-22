@@ -22,8 +22,8 @@ from watcher.utils import download_file, upload_file, create_job, create_remote_
 async def run():
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
-
-    query_sets = await Uknow.filter(status="pending")
+    start_time = time.time()
+    query_sets = await IcemTask.filter(task_status="pending")
     prepare_path = r"{}".format(configs.PREPARE_PATH)
     if len(query_sets) == 0:
         print(f"No files in {prepare_path} currently.")
@@ -45,68 +45,84 @@ async def run():
             icem_md5 = query.icem_md5
             # 5) 再发申请硬件资源的请求
             r = create_job(task_id, 'icem', icem_md5)
-            job_id = r.json()['job_id']
+            job_id = r.json()['id']
             await IcemTask.filter(task_id=task_id).update(job_id=job_id)
             # 6) 对任务状态进行轮询
-            state = reverse_job(job_id)
             # 2. 开始Fluent任务
             # (1) 任务成功，取回fluent.msh，并移动到prepare路径下
-            if state == 'COMPLETE':
-                url = f'{base_url}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
-                file_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
-                download_file(url, file_path)
-                # (2) 等待文件下载完全下载下来
-                fluent_msh_file = os.path.join(file_path, 'fluent.msh')
-                download_complete(fluent_msh_file)
-                # (3) 将prof文件复制到文件夹中, 具体要根据用户的选择
-                query = await Uknow.filter(task_id=task_id).first()
-                fluent_params = query.fluent_params
-                # todo: 需要从fluent_params中取出prof文件
-                shutil.copy('./static/prof/VA_from_ICA_fourier_mass.prof', file_path)
-                # (4) 将fluent文件夹进行打包
-                dest = os.path.join(configs.PREPARE_PATH, task_id, 'fluent.zip')
-                FileTool.zip_folder(file_path, dest)
-                # (5) 计算fluent的md5
-                fluent_md5 = FileTool.get_md5(dest)
-                await FluentTask.create(task_id=task_id, md5=fluent_md5)
-                # (6) 上传文件到速石
-                upload_file(dest, 'fluent')
-                # (7) 创建fluent任务
-                r = create_job(task_id, 'fluent', fluent_md5)
-                job_id = r.json()['job_id']
-                await FluentTask.filter(task_id=task_id).update(job_id=job_id)
-                # (8) 对任务状态进行轮询
+            icem_finish = False
+            while not icem_finish:
                 state = reverse_job(job_id)
                 if state == 'COMPLETE':
-                    url = f'{base_url}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent-result.zip'
-                    file_path = os.path.join(configs.PREPARE_PATH, task_id)
+                    print(time.time()-start_time)
+                    print('Icem finish!!!!')
+                    url = f'{base_url}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
+                    file_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
                     download_file(url, file_path)
-                    # (9) 等待文件下载完全下载下来
-                    fluent_result_zip = os.path.join(file_path, 'fluent-result.zip')
-                    download_complete(fluent_result_zip)
-                    # (10) 将文件结果上传到minio
-                    # (11) 更新Uknow, FluentTask表
-                    await Uknow.filter(task_id=task_id).update(
-                        fluent_status=TaskStatus.SUCCESS
-                    )
-                    # (12) 将文件夹移动到archive下进行归档
-                    shutil.move(file_path, configs.ARCHIVE_PATH)
+                    # (2) 等待文件下载完全下载下来
+                    fluent_msh_file = os.path.join(file_path, 'fluent.msh')
+                    download_complete(fluent_msh_file)
+                    # (3) 将prof文件复制到文件夹中, 具体要根据用户的选择
+                    query = await Uknow.filter(task_id=task_id).first()
+                    fluent_params = query.fluent_params
+                    # todo: 需要从fluent_params中取出prof文件
+                    shutil.copy('./static/prof/VA_from_ICA_fourier_mass.prof', file_path)
+                    # (4) 将fluent文件夹进行打包
+                    output_filename = f'{file_path}.zip'
+                    FileTool.make_zipfile(output_filename, file_path)
+
+                    # (5) 计算fluent的md5
+                    fluent_md5 = FileTool.get_md5(output_filename)
+                    await FluentTask.create(task_id=task_id, fluent_md5=fluent_md5)
+                    # (6) 上传文件到速石
+                    upload_file(task_id, 'fluent')
+                    # (7) 创建fluent任务
+                    r = create_job(task_id, 'fluent', fluent_md5)
+                    job_id = r.json()['id']
+                    await FluentTask.filter(task_id=task_id).update(job_id=job_id)
+                    # (8) 对任务状态进行轮询
+                    fluent_finish = False
+                    while not fluent_finish:
+                        state = reverse_job(job_id)
+                        print(state)
+                        if state == 'COMPLETE':
+                            url = f'{base_url}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent-result.zip'
+                            file_path = os.path.join(configs.PREPARE_PATH, task_id)
+                            download_file(url, file_path)
+                            # (9) 等待文件下载完全下载下来
+                            fluent_result_zip = os.path.join(file_path, 'fluent-result.zip')
+                            download_complete(fluent_result_zip)
+                            # (10) 将文件结果上传到minio
+                            # (11) 更新Uknow, FluentTask表
+                            await Uknow.filter(task_id=task_id).update(
+                                fluent_status=TaskStatus.SUCCESS
+                            )
+                            # (12) 将文件夹移动到archive下进行归档
+                            shutil.move(file_path, configs.ARCHIVE_PATH)
+                            icem_finish = True
+                            fluent_finish = True
+                        elif state == 'FAILED':
+                            url = f'{base_url}/fa/api/v0/download/jobs/job-{job_id}/log/stderr.txt'
+                            file_path = os.path.join(configs.PREPARE_PATH, task_id)
+                            download_file(url, file_path)
+                            # 将文件夹移动到archive下进行归档
+                            shutil.move(file_path, configs.ARCHIVE_PATH)
+                            icem_finish = True
+                            fluent_finish = True
+                        else:
+                            time.sleep(5)
                 elif state == 'FAILED':
-                    url = f'{base_url}/fa/api/v0/download/jobs/job-{job_id}/log/stderr.txt'
+                    base_url = f'http://120.48.150.243/fa/api/v0/download/jobs/job-{job_id}/log/stderr.txt'
                     file_path = os.path.join(configs.PREPARE_PATH, task_id)
-                    download_file(url, file_path)
-                    # 将文件夹移动到archive下进行归档
-                    shutil.move(file_path, configs.ARCHIVE_PATH)
+                    download_file(base_url, file_path)
+                    # 将日志上传到minio
+                    # todo
+                    icem_finish = True
+                    fluent_finish = True
                 else:
                     time.sleep(5)
-            elif state == 'FAILED':
-                base_url = f'http://120.48.150.243/fa/api/v0/download/jobs/job-{job_id}/log/stderr.txt'
-                file_path = os.path.join(configs.PREPARE_PATH, task_id)
-                download_file(base_url, file_path)
-                # 将日志上传到minio
-            else:
-                time.sleep(5)
-
+        end_time = time.time()
+        print(end_time-start_time)
 
 if __name__ == "__main__":
     run_async(run())

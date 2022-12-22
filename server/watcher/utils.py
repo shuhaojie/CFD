@@ -11,6 +11,7 @@ import re
 import yaml
 import hashlib
 from glob import glob
+from datetime import datetime
 from tortoise import Tortoise
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -178,6 +179,19 @@ class FileTool:
         zipf.close()
         return dest
 
+    @staticmethod
+    def make_zipfile(output_filename, source_dir):
+        relroot = os.path.abspath(os.path.join(source_dir, os.pardir))
+        with zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED) as zip:
+            for root, dirs, files in os.walk(source_dir):
+                # add directory (needed for empty dirs)
+                zip.write(root, os.path.relpath(root, relroot))
+                for file in files:
+                    filename = os.path.join(root, file)
+                    if os.path.isfile(filename):  # regular files only
+                        arcname = os.path.join(os.path.relpath(root, relroot), file)
+                        zip.write(filename, arcname)
+
     @classmethod
     def read_file(cls, filepath, mode="r"):
         f = open(filepath, mode)
@@ -312,7 +326,7 @@ def upload_file(task_id, task_type):
     abs_path = os.path.join(configs.PREPARE_PATH, task_id, f"{task_type}.zip")
     files = {
         'file': open(abs_path, 'rb'),
-        'key': (None, f'dir1/{task_id}.zip'),
+        'key': (None, f'usc/{task_id}/{task_type}.zip'),
         'storage_id': (None, '-1'),
     }
 
@@ -355,18 +369,20 @@ def download_complete(file_path):
             time.sleep(5)
 
 
-def create_job(task_id, task_type, md5, hardware_level='middle', solver='3dpp', parallel_number=28):
+def create_job(task_id, task_type, md5, hardware_level='middle', solver='3ddp', parallel_number=28):
     base_url = 'http://120.48.150.243/api/v1/jobs'
     token = get_token()
     headers = {'Authorization': f'Bearer {token}'}
+    now = datetime.now()
+    task_name = f'{now.year}{now.month}{now.day}{now.hour}{now.minute}{now.second}_{task_type}'
     if task_type == 'icem':
         # 目前暂时用这个固定配置, 这个是根据用户选择的配置来的
         if hardware_level == 'middle':
             f = open('./static/sushi/icem_b1.c1.32.json', encoding='UTF-8')
             json_data = json.load(f)
-            json_data['inputs'][0]['value'] = f'/icem.zip'
+            json_data['inputs'][0]['value'] = f'/usc/{task_id}/{task_type}.zip'
             json_data['inputs'][1]['value'] = md5
-            json_data['name'] = f'{task_id}_icem'
+            json_data['name'] = task_name
             # https://stackoverflow.com/a/22567429/10844937
             r = requests.post(base_url, json=json_data, headers=headers)
             return r
@@ -375,11 +391,11 @@ def create_job(task_id, task_type, md5, hardware_level='middle', solver='3dpp', 
         if hardware_level == 'middle':
             f = open('./static/sushi/fluent-2019_b1.c1.32.json', encoding='UTF-8')
             json_data = json.load(f)
-            json_data['inputs'][0]['value'] = f'/fluent.zip'
+            json_data['inputs'][0]['value'] = f'/usc/{task_id}/{task_type}.zip'
             json_data['inputs'][1]['value'] = solver
             json_data['inputs'][2]['value'] = parallel_number
             json_data['inputs'][3]['value'] = md5
-            json_data['name'] = f'{task_id}_fluent'
+            json_data['name'] = task_name
             r = requests.post(base_url, json=json_data, headers=headers)
             return r
 
