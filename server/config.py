@@ -73,6 +73,12 @@ class Config(Settings):
     ARCHIVE_PATH: Optional[str] = Field(None, env="ARCHIVE_PATH")
     FILE_DIFF_TIME: Optional[str] = Field(None, env="FILE_DIFF_TIME")
 
+    # MINI配置
+    MINIO_BUCKET: Optional[str] = Field(None, env="MINIO_BUCKET")
+    MINIO_END: Optional[str] = Field(None, env="MINIO_END")
+    MINIO_PORT: Optional[str] = Field(None, env="MINIO_PORT")
+    MINIO_USER: Optional[str] = Field(None, env="MINIO_USER")
+    MINIO_PASSWD: Optional[str] = Field(None, env="MINIO_PASSWD")
 
 @lru_cache()  # 结果缓存 仅启动时运行一次
 def get_configs():
