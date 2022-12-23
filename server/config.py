@@ -80,6 +80,9 @@ class Config(Settings):
     MINIO_USER: Optional[str] = Field(None, env="MINIO_USER")
     MINIO_PASSWD: Optional[str] = Field(None, env="MINIO_PASSWD")
 
+    # 第三方url
+    BASE_URL: Optional[str] = Field(None, env="BASE_URL")
+
 @lru_cache()  # 结果缓存 仅启动时运行一次
 def get_configs():
     """
