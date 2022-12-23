@@ -9,7 +9,7 @@ def init_openapi(app):
         if app.openapi_schema:
             return app.openapi_schema
         openapi_schema = get_openapi(
-            title="强联智创官网api",
+            title="CFD自动化平台api",
             description="模块接口文档",
             version="1.0.0",
             routes=app.routes,
