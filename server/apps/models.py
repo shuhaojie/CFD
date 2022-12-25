@@ -1,8 +1,9 @@
-import uuid
+import datetime
 from tortoise import fields
 from tortoise.models import Model
-from utils.constant import MyConstant, TaskStatus, DataStatus
+from utils.constant import MyConstant
 from commons.base_model import AbstractBaseModel
+from fastapi_admin.models import AbstractAdmin
 
 
 # CFD和Uknow用户进行交互, 返给用户想要的信息. 这个表会注册到admin页面中
@@ -45,10 +46,10 @@ class Uknow(AbstractBaseModel):
     # 如果是排队中的话, 需要有一个排队号
     icem_queue_number = fields.IntField(description="Icem排队号", null=True)
     # 执行错误的时候, 需要有一个日志文件, 下载下来之后需要重命名
-    icem_log_file_path = fields.CharField(max_length=MyConstant.MAX_LENGTH,
+    icem_log_file_path = fields.CharField(max_length=1024,
                                           description="icem日志文件路径",
                                           null=True)
-    icem_result_file_path = fields.CharField(max_length=MyConstant.MAX_LENGTH,
+    icem_result_file_path = fields.CharField(max_length=1024,
                                              description="icem结果路径",
                                              null=True)
     icem_start = fields.DatetimeField(description='Icem开始时间', null=True)
@@ -63,10 +64,10 @@ class Uknow(AbstractBaseModel):
     # 如果是排队中的话, 需要有一个排队号
     fluent_queue_number = fields.IntField(description="Fluent排队号", null=True)
     # 执行错误的时候, 需要有一个日志文件, 下载下来之后需要重命名
-    fluent_log_file_path = fields.CharField(max_length=MyConstant.MAX_LENGTH,
+    fluent_log_file_path = fields.CharField(max_length=1024,
                                             description="fluent日志文件",
                                             null=True)
-    fluent_result_file_path = fields.CharField(max_length=MyConstant.MAX_LENGTH,
+    fluent_result_file_path = fields.CharField(max_length=1024,
                                                description="fluent结果路径",
                                                null=True)
     fluent_start = fields.DatetimeField(description='Fluent开始时间', null=True)
@@ -196,6 +197,12 @@ class Token(Model):
     expire_time = fields.DatetimeField(description='token过期时间')
 
 
-class Admin(Model):
-    username = fields.CharField(description="用户名", max_length=MyConstant.MAX_LENGTH)
-    password = fields.CharField(description="密码", max_length=MyConstant.MAX_LENGTH)
+class Admin(AbstractAdmin):
+    last_login = fields.DatetimeField(description="Last Login", default=datetime.datetime.now)
+    email = fields.CharField(max_length=200, default="")
+    avatar = fields.CharField(max_length=200, default="")
+    intro = fields.TextField(default="")
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.pk}#{self.username}"
