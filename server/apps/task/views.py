@@ -1,15 +1,15 @@
 import os
-import uuid
 from datetime import datetime
-from pydantic import Field
-from fastapi import Depends, UploadFile
+from fastapi import Depends, UploadFile, BackgroundTasks
 from fastapi_restful.inferring_router import InferringRouter
 from fastapi_restful.cbv import cbv
 
 from commons.schemas import BaseResponse, get_serialize_pydantic
-from apps.models import Uknow, IcemTask, FluentTask
+from apps.models import Uknow
 from .schemas import StartResponseSchema, SendDataRequestSchema, TaskListRequest
+from .tasks import monitor_task
 from config import configs
+
 
 uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 
@@ -40,6 +40,7 @@ async def fetch_task_id():
 async def send_configs(query_data: SendDataRequestSchema):
     data = query_data.dict()
     task_id = data.get("task_id", None)
+    username = data.get("username", None)
     md5 = data.get("md5", None)
     mac_address = data.get("mac_address", None)
     task_name = data.get("task_name", None)
@@ -48,22 +49,26 @@ async def send_configs(query_data: SendDataRequestSchema):
     icem_params = data.get("icem_params", None)
     fluent_params = data.get("fluent_params", None)
     # 查看当前的数据条数, 如果是条数少于10, is_await就会False, 否则要排队
-    await Uknow.create(
-        task_id=task_id,
-        md5=md5,
-        mac_address=mac_address,
-        task_name=task_name,
-        icem_hardware_level=icem_hardware_level,
-        fluent_hardware_level=fluent_hardware_level,
-        icem_params=icem_params,
-        fluent_params=fluent_params,
-    )
-    return {'code': 200, "message": "", 'status': True}
+    task_id_list = await Uknow.all().values_list("task_id", flat=True)
+    if task_id in task_id_list:
+        return {'code': 200, "message": "task_id已存在", 'status': True}
+    else:
+        await Uknow.create(
+            task_id=task_id,
+            md5=md5,
+            mac_address=mac_address,
+            task_name=task_name,
+            icem_hardware_level=icem_hardware_level,
+            fluent_hardware_level=fluent_hardware_level,
+            icem_params=icem_params,
+            fluent_params=fluent_params,
+        )
+        return {'code': 200, "message": "文件上传成功", 'status': True}
 
 
 # https://stackoverflow.com/a/70657621/10844937
-@uknow_router.post("/upload_file", name="发送数据文件", response_model=BaseResponse)
-async def upload(file: UploadFile):
+@uknow_router.post("/upload_file", name="上传文件", response_model=BaseResponse)
+async def upload(file: UploadFile, background_tasks: BackgroundTasks):
     try:
         contents = file.file.read()
         write_path = os.path.join(configs.MONITOR_PATH, file.filename)
@@ -73,7 +78,9 @@ async def upload(file: UploadFile):
         return {"message": f"There was an error {e} uploading the file"}
     finally:
         file.file.close()
-    return {'code': 200, "message": "", 'status': True}
+    task_id = file.filename.split('.')[0]
+    background_tasks.add_task(monitor_task, task_id)
+    return {'code': 200, "message": "文件上传成功", 'status': True}
 
 
 @cbv(uknow_router)
