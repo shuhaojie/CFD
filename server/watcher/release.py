@@ -86,11 +86,11 @@ async def run():
                         state = reverse_job(job_id)
                         print(state)
                         if state == 'COMPLETE':
-                            url = f'{base_url}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent-result.zip'
+                            url = f'{base_url}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result.zip'
                             file_path = os.path.join(configs.PREPARE_PATH, task_id)
                             download_file(url, file_path)
                             # (9) 等待文件下载完全下载下来
-                            fluent_result_zip = os.path.join(file_path, 'fluent-result.zip')
+                            fluent_result_zip = os.path.join(file_path, 'fluent_result.zip')
                             download_complete(fluent_result_zip)
                             # (10) 将文件结果上传到minio
                             # (11) 更新Uknow, FluentTask表
