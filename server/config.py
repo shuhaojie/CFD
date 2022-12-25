@@ -73,15 +73,23 @@ class Config(Settings):
     ARCHIVE_PATH: Optional[str] = Field(None, env="ARCHIVE_PATH")
     FILE_DIFF_TIME: Optional[str] = Field(None, env="FILE_DIFF_TIME")
 
-    # MINI配置
+    # MINIO配置
     MINIO_BUCKET: Optional[str] = Field(None, env="MINIO_BUCKET")
     MINIO_END: Optional[str] = Field(None, env="MINIO_END")
     MINIO_PORT: Optional[str] = Field(None, env="MINIO_PORT")
     MINIO_USER: Optional[str] = Field(None, env="MINIO_USER")
     MINIO_PASSWD: Optional[str] = Field(None, env="MINIO_PASSWD")
 
+    # REDIS配置
+    REDIS_HOST: Optional[str] = Field(None, env="REDIS_HOST")
+    REDIS_USER: Optional[str] = Field(None, env="REDIS_USER")
+    REDIS_MASTER_NAME: Optional[str] = Field(None, env="REDIS_MASTER_NAME")
+    REDIS_PASSWORD: Optional[str] = Field(None, env="REDIS_PASSWORD")
+    REDIS_SENTRY: Optional[str] = Field(None, env="REDIS_SENTRY")
+
     # 第三方url
     BASE_URL: Optional[str] = Field(None, env="BASE_URL")
+
 
 @lru_cache()  # 结果缓存 仅启动时运行一次
 def get_configs():
