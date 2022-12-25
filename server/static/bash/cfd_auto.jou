@@ -1,0 +1,22 @@
+file/read-case "./fluent/fluent.msh"
+mesh/scale 0.001 0.001 0.001
+define/models/unsteady-2nd-order y
+define/materials/change-create air blood y constant 1060 n n y constant 0.0035 n n n y
+
+file/read-profile "./fluent/ICA.prof"
+define/boundary-conditions/zone-type vessel.part_id2 mass-flow-inlet
+define/boundary-conditions/mass-flow-inlet vessel.part_id2 y y y n inlet_mass ICA_MASS n 0 n y
+
+define/boundary-conditions/zone-type vessel.part_id3 pressure-outlet
+
+
+solve/set/time-step 0.01 
+solve/set/number-of-time-steps 240
+solve/set/max-iterations-per-time-step 20
+solve/initialize/hyb-initialization
+file/auto-save/data-frequency 5
+file/transient-export/ensight-gold-transient ./fluent/ensight_result , , , pressure total-pressure velocity-magnitude x-velocity y-velocity z-velocity wall-shear x-wall-shear y-wall-shear z-wall-shear q n y export-1 10 y
+file/write-case-dat "./fluent/test"
+solve/dual-time-iterate 240 20
+exit
+
