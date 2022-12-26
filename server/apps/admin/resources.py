@@ -77,24 +77,24 @@ class StatusComputeFields(ComputeField):
             if not query.icem_status:
                 return '数据上传成功'
             else:
-                if query.icem_status == 'pending':
+                if query.icem_status == Status.PENDING:
                     return 'Icem处理中'
-                elif query.icem_status == 'fail':
+                elif query.icem_status == Status.FAIL:
                     return 'Icem处理失败'
-                elif query.icem_status == 'pending':
-                    queur_number = query.task_queue
-                    return f'任务排队中, 排队号{queur_number}'
+                elif query.icem_status == Status.QUEUE:
+                    queue_number = query.task_queue
+                    return f'任务排队中, 排队号{queue_number}'
                 else:
                     if not query.fluent_status:
                         return 'Icem处理成功'
                     else:
-                        if query.fluent_status == 'pending':
+                        if query.fluent_status == Status.PENDING:
                             return 'Fluent处理中'
-                        elif query.fluent_status == 'fail':
+                        elif query.fluent_status == Status.FAIL:
                             return 'Fluent处理失败'
                         else:
                             return '任务成功'
-        elif query.data_status == 'pending':
+        elif query.data_status == Status.PENDING:
             return '数据上传中'
         else:
             return query.data_code
@@ -113,6 +113,17 @@ class TotalTimeComputeFields(ComputeField):
                 total_seconds = 0
         m, s = divmod(total_seconds, 60)
         return f'{int(m)}分{int(s)}秒'
+
+
+class LogFileComputeFields(ComputeField):
+    async def get_value(self, request: Request, obj: dict):
+        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        if query.fluent_result_file_path:
+            return query.fluent_result_file_path
+        if query.icem_log_file_path:
+            return query.icem_log_file_path
+        if query.fluent_log_file_path:
+            return query.fluent_log_file_path
 
 
 @app.register
@@ -139,8 +150,7 @@ class UknowResource(Model):
         DateTimeComputeFields(name="create_time", label="创建时间", input_=inputs.DisplayOnly()),
         StatusComputeFields(name="data_status", label="任务状态", input_=inputs.DisplayOnly()),
         TotalTimeComputeFields(name="fluent_duration", label="任务耗时", input_=inputs.DisplayOnly()),
-        Field(name="fluent_result_file_path", label="结果文件", input_=inputs.DisplayOnly()),
-        Field(name="fluent_log_file_path", label="日志文件", input_=inputs.DisplayOnly()),
+        LogFileComputeFields(name="fluent_result_file_path", label="结果/日志文件", input_=inputs.DisplayOnly()),
     ]
 
     async def get_toolbar_actions(self, request: Request) -> List[ToolbarAction]:
