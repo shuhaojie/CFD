@@ -3,7 +3,7 @@ mesh/scale 0.001 0.001 0.001
 define/models/unsteady-2nd-order y
 define/materials/change-create air blood y constant 1060 n n y constant 0.0035 n n n y
 
-file/read-profile "./fluent/ICA.prof"
+file/read-profile "./fluent/ICA_from_ICA_fourier_mass.prof"
 define/boundary-conditions/zone-type vessel.part_id2 mass-flow-inlet
 define/boundary-conditions/mass-flow-inlet vessel.part_id2 y y y n inlet_mass ICA_MASS n 0 n y
 
