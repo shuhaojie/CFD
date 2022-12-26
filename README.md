@@ -48,7 +48,20 @@ python main.py
 
 ### 2. 启动celery
 
+Windows
+
 ```bash
 cd server
 celery -A worker.celery worker --pool=solo -l info
 ```
+<https://stackoverflow.com/a/47331550/10844937>
+
+注意: 这个地方只能用`--pool=solo`的形式启动, 这种方式并不是并行的, 目前采用`gevent`和`eventlet`都会有问题
+
+Unix
+
+```bash
+cd server
+celery -A worker.celery worker -l info
+```
+
