@@ -18,6 +18,7 @@ from utils.oss import Minio
 
 minio = Minio()
 
+
 class FileTool:
     """
     读/写 json文件
@@ -413,4 +414,5 @@ def task_fail(task_id, job_id, headers):
 
 
 if __name__ == '__main__':
-    create_remote_folder("foo")
+    # create_remote_folder("foo")
+    pass
