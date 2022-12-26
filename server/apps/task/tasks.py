@@ -214,6 +214,7 @@ async def monitor_task(task_id):
                         # 更新状态
                         await Uknow.filter(task_id=task_id).update(
                             icem_status=Status.FAIL,
+                            icem_end=datetime.now(),
                             icem_log_file_path=minio_url,
                         )
                         await IcemTask.filter(task_id=task_id).delete()
