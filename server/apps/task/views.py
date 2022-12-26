@@ -7,7 +7,7 @@ from fastapi_restful.cbv import cbv
 from commons.schemas import BaseResponse, get_serialize_pydantic
 from apps.models import Uknow
 from .schemas import StartResponseSchema, SendDataRequestSchema, TaskListRequest
-from .tasks import monitor_task
+from worker import run_task
 from config import configs
 
 
@@ -84,7 +84,7 @@ async def upload(file: UploadFile, background_tasks: BackgroundTasks):
     if task_id not in task_id_list:
         return {'code': 200, "message": "stl文件名错误", 'status': False}
     else:
-        background_tasks.add_task(monitor_task, task_id)
+        run_task.apply_async((task_id,))
         return {'code': 200, "message": "文件上传成功", 'status': True}
 
 
