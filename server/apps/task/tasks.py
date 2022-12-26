@@ -174,6 +174,7 @@ async def monitor_task(task_id):
                                 fluent_result_zip = os.path.join(file_path, 'fluent_result.zip')
                                 download_complete(fluent_result_zip)
                                 # (10) 将文件结果上传到minio
+                                minio.upload_file(f'{task_id}/fluent_result.zip', fluent_result_zip)
                                 # (11) 更新Uknow, FluentTask表
                                 fluent_end = datetime.now()
                                 await Uknow.filter(task_id=task_id).update(
