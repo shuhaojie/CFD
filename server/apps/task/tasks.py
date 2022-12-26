@@ -16,8 +16,8 @@ from config import configs
 from apps.models import Uknow, IcemTask, Token, FluentTask, FluentProf, Archive
 from dbs.database import TORTOISE_ORM
 from utils.constant import Status
-from .utils import FileTool, get_token, download_file, upload_file, create_job, create_remote_folder, reverse_job, \
-    download_complete, task_fail
+from apps.task.utils import FileTool, get_token, download_file, upload_file, create_job, create_remote_folder, \
+    reverse_job, download_complete, task_fail
 from logs import api_log
 from utils.oss import Minio
 
@@ -33,11 +33,9 @@ async def monitor_task(task_id):
     monitor_path, prepare_path, archive_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(
         configs.PREPARE_PATH), r"{}".format(configs.ARCHIVE_PATH)
     stl_file_path = os.path.join(monitor_path, task_id + '.stl')
-    print(stl_file_path)
     try:
         # 等待文件写入稳定
         FileTool.write_complete(stl_file_path)
-
         # md5校验
         query = await Uknow.filter(task_id=task_id).first()
         md5 = query.md5
@@ -71,6 +69,11 @@ async def monitor_task(task_id):
             if len(query) < 10:
                 # 更新task的状态
                 await IcemTask.filter(task_id=task_id).update(task_status=Status.PENDING)
+                icem_start = datetime.now()
+                await Uknow.filter(task_id=task_id).update(
+                    icem_status=Status.PENDING,
+                    icem_start=icem_start
+                )
                 # 判斷token是否存在
                 query = await Token.filter().first()
                 if query:
@@ -113,6 +116,12 @@ async def monitor_task(task_id):
                     if state == 'COMPLETE':
                         print(time.time() - start_time)
                         print('Icem finish!!!!')
+                        icem_end = datetime.now()
+                        await Uknow.filter(task_id=task_id).update(
+                            icem_status=Status.SUCCESS,
+                            icem_end=icem_end,
+                            icem_duration=float((icem_end - icem_start).seconds),
+                        )
                         url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
                         fluent_dst_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
                         FileTool.make_directory(fluent_dst_path)
@@ -127,7 +136,8 @@ async def monitor_task(task_id):
                         query = await FluentProf.filter(prof_name=fluent_prof).first()
                         prof_path = query.prof_path
                         # 移动prof文件并重命名
-                        shutil.copy(f'./static/prof/{prof_path}', os.path.join(fluent_dst_path, 'ICA.prof'))
+                        shutil.copy(f'./static/prof/{prof_path}',
+                                    os.path.join(fluent_dst_path, 'ICA_from_ICA_fourier_mass.prof'))
                         # (4) 将jou文件复制到路径下
                         shutil.copy('./static/bash/cfd_auto.jou', fluent_dst_path)
                         # (4) 将fluent文件夹进行打包
@@ -143,6 +153,11 @@ async def monitor_task(task_id):
                         r = create_job(task_id, 'fluent', fluent_md5, headers)
                         job_id = r.json()['id']
                         await FluentTask.filter(task_id=task_id).update(job_id=job_id)
+                        fluent_start = datetime.now()
+                        await Uknow.filter(task_id=task_id).update(
+                            fluent_status=Status.PENDING,
+                            fluent_start=fluent_start
+                        )
                         # (8) 对任务状态进行轮询
                         fluent_finish = False
                         while not fluent_finish:
@@ -157,10 +172,16 @@ async def monitor_task(task_id):
                                 download_complete(fluent_result_zip)
                                 # (10) 将文件结果上传到minio
                                 # (11) 更新Uknow, FluentTask表
+                                fluent_end = datetime.now()
                                 await Uknow.filter(task_id=task_id).update(
-                                    fluent_status=Status.SUCCESS
+                                    fluent_status=Status.SUCCESS,
+                                    fluent_end=fluent_end,
+                                    fluent_duration=float((fluent_end - fluent_start).seconds),
                                 )
                                 # (12) 将文件夹移动到archive下进行归档
+                                archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
+                                if os.path.isdir(archive_path):
+                                    shutil.rmtree(archive_path)
                                 shutil.move(file_path, configs.ARCHIVE_PATH)
                                 icem_finish = True
                                 fluent_finish = True
@@ -205,7 +226,9 @@ async def monitor_task(task_id):
             # (1) 数据移动到失败的路径下
             shutil.move(stl_file_path, archive_path)
             # (2) 更新数据记录
-            await Uknow.filter(task_id=task_id).update(data_status='fail', data_code='数据不完整')
+            await Uknow.filter(task_id=task_id).update(
+                data_status=Status.FAIL,
+                data_code='数据不完整')
     except Exception as e:
         await IcemTask.filter(task_id=task_id).delete()  # 如果前面某一步除了問題，需要及時將數據記錄刪掉
         import traceback
