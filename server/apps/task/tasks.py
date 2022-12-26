@@ -27,6 +27,9 @@ minio = Minio()
 async def monitor_task(task_id):
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
+    await Uknow.filter(task_id=task_id).update(
+        create_time=datetime.now()
+    )
     start_time = time.time()
     api_log.info(f'================Task {task_id} starts===================')
     print(f'================Task {task_id} starts===================')
