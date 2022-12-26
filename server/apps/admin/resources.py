@@ -1,23 +1,18 @@
+import datetime
 import os
+import pytz
 from typing import List
 
 from starlette.requests import Request
 
-from apps.models import Admin, Uknow
+from apps.models import Uknow, FluentHardware, IcemHardware
 from fastapi_admin.app import app
 from fastapi_admin.file_upload import FileUpload
-from fastapi_admin.resources import Action, Field, Link, Model, ToolbarAction, ComputeField
-from fastapi_admin.widgets import displays, filters, inputs
+from fastapi_admin.resources import Action, Field, Dropdown, Model, ToolbarAction, ComputeField
+from fastapi_admin.widgets import filters, inputs
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 upload = FileUpload(uploads_dir=os.path.join(BASE_DIR, "static", "uploads"))
-
-
-@app.register
-class Dashboard(Link):
-    label = "Dashboard"
-    icon = "fas fa-home"
-    url = "/admin"
 
 
 class SystemComputeFields(ComputeField):
@@ -85,17 +80,47 @@ class StatusComputeFields(ComputeField):
             else:
                 if query.icem_status == 'pending':
                     return 'Icem处理中'
+                elif query.icem_status == 'fail':
+                    return 'Icem处理失败'
+                elif query.icem_status == 'pending':
+                    queur_number = query.task_queue
+                    return f'任务排队中, 排队号{queur_number}'
+                else:
+                    if not query.fluent_status:
+                        return 'Icem处理成功'
+                    else:
+                        if query.fluent_status == 'pending':
+                            return 'Fluent处理中'
+                        elif query.fluent_status == 'fail':
+                            return 'Fluent处理失败'
+                        else:
+                            return '任务成功'
         elif query.data_status == 'pending':
             return '数据上传中'
         else:
             return query.data_code
 
 
+class TotalTimeComputeFields(ComputeField):
+    async def get_value(self, request: Request, obj: dict):
+        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        if query.fluent_end:
+            total_seconds = (query.fluent_end - query.create_time).total_seconds()
+        else:
+            if query.icem_end:
+                total_seconds = (query.icem_end - query.create_time).total_seconds()
+            else:
+                total_seconds = ((datetime.datetime.now()+datetime.timedelta(hours=-8)).replace(tzinfo=pytz.timezone('UTC'))-query.create_time).total_seconds()
+        m, s = divmod(total_seconds, 60)
+        return f'{int(m)}分{int(s)}秒'
+
+
 @app.register
 class UknowResource(Model):
-    label = "Uknow"
+    label = "任务状态"
     model = Uknow
-    icon = "fas fa-bars"
+    icon = "fas fa-home"
+    url = "/admin"
     page_pre_title = "uknow数据列表"
     filters = [
         filters.Search(
@@ -113,8 +138,7 @@ class UknowResource(Model):
         Field(name="username", label="用户名", input_=inputs.DisplayOnly()),
         DateTimeComputeFields(name="create_time", label="创建时间", input_=inputs.DisplayOnly()),
         StatusComputeFields(name="data_status", label="任务状态", input_=inputs.DisplayOnly()),
-        # IcemLevelComputeFields(name="icem_hardware_level", label="Icem硬件等級", input_=inputs.DisplayOnly()),
-        # FluentLevelComputeFields(name="fluent_hardware_level", label="Fluent硬件等級", input_=inputs.DisplayOnly()),
+        TotalTimeComputeFields(name="fluent_duration", label="任务耗时", input_=inputs.DisplayOnly()),
         Field(name="fluent_result_file_path", label="结果文件", input_=inputs.DisplayOnly()),
         Field(name="fluent_log_file_path", label="日志文件", input_=inputs.DisplayOnly()),
     ]
@@ -133,13 +157,15 @@ class UknowResource(Model):
 
 
 @app.register
-class GithubLink(Link):
-    label = "GitHub"
-    url = "http://172.16.1.232:8443/shuhaojie/CFD"
-    icon = "fab fa-github"
-    target = "_blank"
+class Content(Dropdown):
+    class Fluent(Model):
+        label = "Fluent"
+        model = FluentHardware
 
+    class Icem(Model):
+        label = "Icem"
+        model = IcemHardware
 
-class ComputeField(Field):
-    async def get_value(self, request: Request, obj: dict):
-        return obj.get(self.name)
+    label = "硬件配置"
+    icon = "fas fa-bars"
+    resources = [Fluent, Icem]
