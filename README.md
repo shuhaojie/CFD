@@ -36,3 +36,19 @@ pqc = pydantic_queryset_creator(Category)
 query_set = Category.filter(uuid__in=['924ca426-707e-11ed-a5c0-acde48001122'])
 query_data = await pqc.from_queryset(query_set)
 ```
+
+## 3. 启动项目
+
+### 1. 启动fastapi
+
+```bash
+cd server
+python main.py
+```
+
+### 2. 启动celery
+
+```bash
+cd server
+celery -A worker.celery worker --pool=solo -l info
+```
