@@ -405,7 +405,7 @@ def task_fail(task_id, job_id, headers):
     download_file(base_url, file_path, headers)
     log_file_path = os.path.join(file_path, 'stderr.txt')
     # 日志上传到minio
-    minio.upload_file('stderr.txt', log_file_path)
+    minio.upload_file(f'{task_id}/stderr.txt', log_file_path)
     # 文件移动到archive下进行归档
     archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
     if os.path.isdir(archive_path):
