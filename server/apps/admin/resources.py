@@ -2,10 +2,9 @@ import datetime
 import os
 import pytz
 from typing import List
-
 from starlette.requests import Request
-
 from apps.models import Uknow, FluentHardware, IcemHardware
+from utils.constant import Status
 from fastapi_admin.app import app
 from fastapi_admin.file_upload import FileUpload
 from fastapi_admin.resources import Action, Field, Dropdown, Model, ToolbarAction, ComputeField
@@ -35,10 +34,10 @@ class DateTimeComputeFields(ComputeField):
 
     async def get_value(self, request: Request, obj: dict):
         system_query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
-        if system_query:
+        if system_query.create_time:
             return system_query.create_time.strftime("%Y-%m-%d %H:%M:%S")
         else:
-            return
+            return '-'
 
 
 class IcemLevelComputeFields(ComputeField):
@@ -107,10 +106,11 @@ class TotalTimeComputeFields(ComputeField):
         if query.fluent_end:
             total_seconds = (query.fluent_end - query.create_time).total_seconds()
         else:
-            if query.icem_end:
-                total_seconds = (query.icem_end - query.create_time).total_seconds()
+            if query.create_time:
+                total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
+                    tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
             else:
-                total_seconds = ((datetime.datetime.now()+datetime.timedelta(hours=-8)).replace(tzinfo=pytz.timezone('UTC'))-query.create_time).total_seconds()
+                total_seconds = 0
         m, s = divmod(total_seconds, 60)
         return f'{int(m)}分{int(s)}秒'
 
@@ -147,6 +147,11 @@ class UknowResource(Model):
         return []
 
     async def cell_attributes(self, request: Request, obj: dict, field: Field) -> dict:
+        if field.name == 'data_status' and obj.get("fluent_status") == Status.SUCCESS:
+            return {"class": "text-green"}
+        if field.name == 'data_status' and (
+                obj.get("fluent_status") == Status.FAIL or obj.get("icem_status") == Status.FAIL):
+            return {"class": "text-red"}
         return await super().cell_attributes(request, obj, field)
 
     async def get_actions(self, request: Request) -> List[Action]:
