@@ -36,6 +36,7 @@ async def monitor_task(task_id):
     monitor_path, prepare_path, archive_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(
         configs.PREPARE_PATH), r"{}".format(configs.ARCHIVE_PATH)
     stl_file_path = os.path.join(monitor_path, task_id + '.stl')
+    minio_url = f'{configs.MINIO_END}:{configs.MINIO_PORT}:minio/{configs.MINIO_BUCKET}/{task_id}/'
     try:
         # 等待文件写入稳定
         FileTool.write_complete(stl_file_path)
@@ -177,10 +178,12 @@ async def monitor_task(task_id):
                                 minio.upload_file(f'{task_id}/fluent_result.zip', fluent_result_zip)
                                 # (11) 更新Uknow, FluentTask表
                                 fluent_end = datetime.now()
+
                                 await Uknow.filter(task_id=task_id).update(
                                     fluent_status=Status.SUCCESS,
                                     fluent_end=fluent_end,
                                     fluent_duration=float((fluent_end - fluent_start).seconds),
+                                    fluent_result_file_path=minio_url,
                                 )
                                 # (12) 将文件夹移动到archive下进行归档
                                 archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
@@ -193,7 +196,8 @@ async def monitor_task(task_id):
                                 task_fail(task_id, job_id, headers)
                                 # 更新状态
                                 await Uknow.filter(task_id=task_id).update(
-                                    fluent_status=Status.FAIL
+                                    fluent_status=Status.FAIL,
+                                    fluent_log_file_path=minio_url,
                                 )
                                 await FluentTask.filter(task_id=task_id).delete()
                                 await Archive.create(
@@ -209,7 +213,8 @@ async def monitor_task(task_id):
                         task_fail(task_id, job_id, headers)
                         # 更新状态
                         await Uknow.filter(task_id=task_id).update(
-                            icem_status=Status.FAIL
+                            icem_status=Status.FAIL,
+                            icem_log_file_path=minio_url,
                         )
                         await IcemTask.filter(task_id=task_id).delete()
                         await Archive.create(
