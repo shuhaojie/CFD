@@ -406,6 +406,9 @@ def task_fail(task_id, job_id, headers):
     # 日志上传到minio
     minio.upload_file('stderr.txt', log_file_path)
     # 文件移动到archive下进行归档
+    archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
+    if os.path.isdir(archive_path):
+        shutil.rmtree(archive_path)
     shutil.move(file_path, configs.ARCHIVE_PATH)
 
 
