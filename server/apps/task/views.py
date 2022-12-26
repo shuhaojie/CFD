@@ -51,11 +51,12 @@ async def send_configs(query_data: SendDataRequestSchema):
     # 查看当前的数据条数, 如果是条数少于10, is_await就会False, 否则要排队
     task_id_list = await Uknow.all().values_list("task_id", flat=True)
     if task_id in task_id_list:
-        return {'code': 200, "message": "task_id已存在", 'status': True}
+        return {'code': 200, "message": "task_id已存在", 'status': False}
     else:
         await Uknow.create(
             task_id=task_id,
             md5=md5,
+            username=username,
             mac_address=mac_address,
             task_name=task_name,
             icem_hardware_level=icem_hardware_level,
@@ -63,7 +64,7 @@ async def send_configs(query_data: SendDataRequestSchema):
             icem_params=icem_params,
             fluent_params=fluent_params,
         )
-        return {'code': 200, "message": "文件上传成功", 'status': True}
+        return {'code': 200, "message": "配置发送成功", 'status': True}
 
 
 # https://stackoverflow.com/a/70657621/10844937
@@ -79,8 +80,12 @@ async def upload(file: UploadFile, background_tasks: BackgroundTasks):
     finally:
         file.file.close()
     task_id = file.filename.split('.')[0]
-    background_tasks.add_task(monitor_task, task_id)
-    return {'code': 200, "message": "文件上传成功", 'status': True}
+    task_id_list = await Uknow.all().values_list("task_id", flat=True)
+    if task_id not in task_id_list:
+        return {'code': 200, "message": "stl文件名错误", 'status': False}
+    else:
+        background_tasks.add_task(monitor_task, task_id)
+        return {'code': 200, "message": "文件上传成功", 'status': True}
 
 
 @cbv(uknow_router)
