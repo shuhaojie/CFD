@@ -9,7 +9,7 @@ from fastapi_admin.models import AbstractAdmin
 # CFD和Uknow用户进行交互, 返给用户想要的信息. 这个表会注册到admin页面中
 class Uknow(AbstractBaseModel):
     task_id = fields.CharField(max_length=MyConstant.MAX_LENGTH, description='任务id')
-    create_time = fields.DatetimeField(description='创建时间', auto_now_add=True)
+    create_time = fields.DatetimeField(description='创建时间', null=True)
     task_name = fields.CharField(description='任务名称', max_length=MyConstant.MAX_LENGTH, null=True)
     username = fields.CharField(description="用户名", max_length=MyConstant.MAX_LENGTH, null=True)
     mac_address = fields.CharField(description="MAC地址", max_length=MyConstant.MAX_LENGTH)
