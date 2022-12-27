@@ -112,7 +112,7 @@ async def validation_exception_handler(exc: RequestValidationError):
 
 
 if __name__ == '__main__':
-    uvicorn.run(app='main:app', host='127.0.0.1', port=8000, debug=True, reload=True)
+    uvicorn.run(app='main:app', host='0.0.0.0', port=8000, debug=True, reload=True)
 
     errors = [{'loc': ('body', 'name'), 'msg': 'field required', 'type': 'value_error.missing'},
               {'loc': ('body', 'picture'), 'msg': 'field required', 'type': 'value_error.missing'}]
