@@ -109,7 +109,7 @@ class TotalTimeComputeFields(ComputeField):
         else:
             # 如果Icem任务失败, 需要用Icem的时间
             if query.icem_status == Status.FAIL:
-                total_seconds = (query.icem_end-query.create_time).total_seconds()
+                total_seconds = (query.icem_end - query.create_time).total_seconds()
             else:
                 if query.create_time:
                     total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
@@ -176,15 +176,62 @@ class UknowResource(Model):
         return []
 
 
+class FrequencyComputeFields(ComputeField):
+    async def get_value(self, request: Request, obj: dict):
+        query = await FluentHardware.filter(id=obj.get("id", None)).first()
+        return f'{query.cpu_frequency}GHz'
+
+
 @app.register
 class Content(Dropdown):
     class Fluent(Model):
         label = "Fluent"
         model = FluentHardware
+        icon = "fas fa-home"
+        page_pre_title = "Fluent硬件配置表"
+        fields = [
+            Field(name="level", label="硬件级别", input_=inputs.DisplayOnly()),
+            Field(name="process_num", label="并发数", input_=inputs.DisplayOnly()),
+            Field(name="enum", label="求解器", input_=inputs.DisplayOnly()),
+            FrequencyComputeFields(name="cpu_frequency", label="CPU核心频率", input_=inputs.DisplayOnly()),
+            Field(name="cpu_model", label="CPU型号", input_=inputs.DisplayOnly()),
+            Field(name="v_cpu", label="虚拟CPU数", input_=inputs.DisplayOnly()),
+            Field(name="memory", label="显存数", input_=inputs.DisplayOnly()),
+            Field(name="price", label="价格(元/小时)", input_=inputs.DisplayOnly()),
+            Field(name="system_platform", label="操作系统", input_=inputs.DisplayOnly()),
+        ]
+
+        async def get_toolbar_actions(self, request: Request) -> List[ToolbarAction]:
+            return []
+
+        async def get_actions(self, request: Request) -> List[Action]:
+            return []
+
+        async def get_bulk_actions(self, request: Request) -> List[Action]:
+            return []
 
     class Icem(Model):
         label = "Icem"
         model = IcemHardware
+        page_pre_title = "uknow数据列表"
+        fields = [
+            Field(name="level", label="硬件级别", input_=inputs.DisplayOnly()),
+            FrequencyComputeFields(name="cpu_frequency", label="CPU核心频率", input_=inputs.DisplayOnly()),
+            Field(name="cpu_model", label="CPU型号", input_=inputs.DisplayOnly()),
+            Field(name="v_cpu", label="虚拟CPU数", input_=inputs.DisplayOnly()),
+            Field(name="memory", label="显存数", input_=inputs.DisplayOnly()),
+            Field(name="price", label="价格(元/小时)", input_=inputs.DisplayOnly()),
+            Field(name="system_platform", label="操作系统", input_=inputs.DisplayOnly()),
+        ]
+
+        async def get_toolbar_actions(self, request: Request) -> List[ToolbarAction]:
+            return []
+
+        async def get_actions(self, request: Request) -> List[Action]:
+            return []
+
+        async def get_bulk_actions(self, request: Request) -> List[Action]:
+            return []
 
     label = "硬件配置"
     icon = "fas fa-bars"
