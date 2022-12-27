@@ -90,6 +90,10 @@ class Config(Settings):
     # 第三方url
     BASE_URL: Optional[str] = Field(None, env="BASE_URL")
 
+    # admin页面账号密码
+    ADMIN_USERNAME: Optional[str] = Field(None, env="ADMIN_USERNAME")
+    ADMIN_PASSWD: Optional[str] = Field(None, env="ADMIN_PASSWD")
+
 
 @lru_cache()  # 结果缓存 仅启动时运行一次
 def get_configs():
