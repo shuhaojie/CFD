@@ -140,12 +140,11 @@ class Archive(AbstractBaseModel):
 class IcemHardware(Model):
     # 共三种: low, medium, high
     level = fields.CharField(max_length=MyConstant.MAX_LENGTH,
-                             description='硬件配置等级',
-                             pk=True)
+                             description='硬件配置等级')
     fs_instance_type = fields.CharField(max_length=MyConstant.MAX_LENGTH,
                                         description='速石实例类型')
     cpu_frequency = fields.FloatField(description='CPU核心频率')
-    cpu_model = fields.FloatField(description='CPU型号')
+    cpu_model = fields.CharField(description='CPU型号', max_length=MyConstant.MAX_LENGTH)
     v_cpu = fields.IntField(description='虚拟CPU数')
     memory = fields.IntField(description='显存数')
     price = fields.FloatField(description='价格(元/小时)')
@@ -160,8 +159,7 @@ class IcemHardware(Model):
 class FluentHardware(Model):
     # 共三种: low, medium, high
     level = fields.CharField(max_length=MyConstant.MAX_LENGTH,
-                             description='硬件配置等级',
-                             pk=True)
+                             description='硬件配置等级')
 
     fs_instance_type = fields.CharField(max_length=MyConstant.MAX_LENGTH,
                                         description='速石实例类型')
@@ -170,7 +168,7 @@ class FluentHardware(Model):
                             description='fluent求解器',
                             default='3dpp')
     cpu_frequency = fields.FloatField(description='CPU核心频率')
-    cpu_model = fields.FloatField(description='CPU型号')
+    cpu_model = fields.CharField(description='CPU型号', max_length=MyConstant.MAX_LENGTH)
     v_cpu = fields.IntField(description='虚拟CPU数')
     memory = fields.IntField(description='显存数')
     price = fields.FloatField(description='价格(元/小时)')
