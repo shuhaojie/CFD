@@ -99,5 +99,9 @@ async def run():
             )
 
 
+def db_table_init():
+    run_async(run())
+
+
 if __name__ == "__main__":
     run_async(run())
