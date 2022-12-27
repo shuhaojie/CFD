@@ -1,15 +1,15 @@
 import os
 from datetime import datetime
-from fastapi import Depends, UploadFile, BackgroundTasks
+from fastapi import UploadFile, BackgroundTasks
 from fastapi_restful.inferring_router import InferringRouter
-from fastapi_restful.cbv import cbv
+from typing import List
+from fastapi import Query
 
-from commons.schemas import BaseResponse, get_serialize_pydantic
+from commons.schemas import BaseResponse
 from apps.models import Uknow
 from .schemas import StartResponseSchema, SendDataRequestSchema, TaskListRequest
 from worker import run_task
 from config import configs
-
 
 uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 
@@ -88,11 +88,16 @@ async def upload(file: UploadFile, background_tasks: BackgroundTasks):
         return {'code': 200, "message": "文件上传成功", 'status': True}
 
 
-@cbv(uknow_router)
-class TaskListCBV:
-    response_model = get_serialize_pydantic(Uknow)
-
-    @uknow_router.get("/reverse_status", name="轮询任务状态", response_model=response_model)
-    async def reverse_status(self, query_data: dict = Depends(TaskListRequest.param)):
-        response = await TaskListRequest().get(**query_data)
-        return response
+@uknow_router.get("/reverse_status", name="轮询任务状态")
+async def reverse_status(task_id_list: List[str] = Query([], title="task_id列表")):
+    if len(task_id_list) == 0:
+        return {'code': 200, "message": "请输入task_id", 'status': True}
+    else:
+        item_list = []
+        for task_id in task_id_list:
+            item_dict = {}
+            query = await Uknow.filter(task_id=task_id).first()
+            item_dict['task_id'] = task_id
+            item_dict['task_name'] = query.task_name
+            item_list.append(item_dict)
+    return {'code': 200, "data": item_list, "message": "状态获取成功", 'status': True}
