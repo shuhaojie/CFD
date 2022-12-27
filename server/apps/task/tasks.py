@@ -36,7 +36,7 @@ async def monitor_task(task_id):
     monitor_path, prepare_path, archive_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(
         configs.PREPARE_PATH), r"{}".format(configs.ARCHIVE_PATH)
     stl_file_path = os.path.join(monitor_path, task_id + '.stl')
-    minio_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/minio/{configs.MINIO_BUCKET}/{task_id}/'
+    minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}/'
     try:
         # 等待文件写入稳定
         FileTool.write_complete(stl_file_path)
@@ -168,14 +168,14 @@ async def monitor_task(task_id):
                             state = reverse_job(job_id)
                             print(state)
                             if state == 'COMPLETE':
-                                url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result.zip'
+                                url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result/ensight_result.encas'
                                 file_path = os.path.join(configs.PREPARE_PATH, task_id)
                                 download_file(url, file_path, headers)
                                 # (9) 等待文件下载完全下载下来
-                                fluent_result_zip = os.path.join(file_path, 'fluent_result.zip')
+                                fluent_result_zip = os.path.join(file_path, 'ensight_result.encas')
                                 download_complete(fluent_result_zip)
                                 # (10) 将文件结果上传到minio
-                                minio.upload_file(f'{task_id}/fluent_result.zip', fluent_result_zip)
+                                minio.upload_file(f'{task_id}/ensight_result.encas', fluent_result_zip)
                                 # (11) 更新Uknow, FluentTask表
                                 fluent_end = datetime.now()
 
@@ -183,7 +183,7 @@ async def monitor_task(task_id):
                                     fluent_status=Status.SUCCESS,
                                     fluent_end=fluent_end,
                                     fluent_duration=float((fluent_end - fluent_start).seconds),
-                                    fluent_result_file_path=minio_url,
+                                    fluent_result_file_path=f'{minio_base_url}/ensight_result.encas',
                                 )
                                 # (12) 将文件夹移动到archive下进行归档
                                 archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
@@ -197,7 +197,7 @@ async def monitor_task(task_id):
                                 # 更新状态
                                 await Uknow.filter(task_id=task_id).update(
                                     fluent_status=Status.FAIL,
-                                    fluent_log_file_path=minio_url,
+                                    fluent_log_file_path=f'{minio_base_url}/stderr.txt',
                                 )
                                 await FluentTask.filter(task_id=task_id).delete()
                                 await Archive.create(
@@ -215,7 +215,7 @@ async def monitor_task(task_id):
                         await Uknow.filter(task_id=task_id).update(
                             icem_status=Status.FAIL,
                             icem_end=datetime.now(),
-                            icem_log_file_path=minio_url,
+                            icem_log_file_path=f'{minio_base_url}/stderr.txt',
                         )
                         await IcemTask.filter(task_id=task_id).delete()
                         await Archive.create(
