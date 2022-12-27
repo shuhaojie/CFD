@@ -1,5 +1,6 @@
 import os
-from datetime import datetime
+import pytz
+import datetime
 from fastapi import UploadFile, BackgroundTasks
 from fastapi_restful.inferring_router import InferringRouter
 from typing import List
@@ -7,9 +8,10 @@ from fastapi import Query
 
 from commons.schemas import BaseResponse
 from apps.models import Uknow
-from .schemas import StartResponseSchema, SendDataRequestSchema, TaskListRequest
+from .schemas import StartResponseSchema, SendDataRequestSchema
 from worker import run_task
 from config import configs
+from utils.constant import Status
 
 uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 
@@ -18,7 +20,7 @@ sushi_router = InferringRouter(prefix="", tags=['Sushi'])
 
 @uknow_router.post("/fetch_task_id", name="获取task_id", response_model=StartResponseSchema)
 async def fetch_task_id():
-    now_time = datetime.now()
+    now_time = datetime.datetime.now()
     query = await Uknow.filter(create_time__year=now_time.year,
                                create_time__month=now_time.month,
                                create_time__day=now_time.day,
@@ -90,14 +92,65 @@ async def upload(file: UploadFile, background_tasks: BackgroundTasks):
 
 @uknow_router.get("/reverse_status", name="轮询任务状态")
 async def reverse_status(task_id_list: List[str] = Query([], title="task_id列表")):
+    all_task_id_list = await Uknow.all().values_list("task_id", flat=True)
     if len(task_id_list) == 0:
-        return {'code': 200, "message": "请输入task_id", 'status': True}
+        return {'code': 200, "message": "请输入task_id", 'status': False}
+    elif not set(task_id_list).issubset(set(all_task_id_list)):
+        return {'code': 200, "message": "存在不合法task_id, 请检查", 'status': False}
     else:
         item_list = []
         for task_id in task_id_list:
             item_dict = {}
             query = await Uknow.filter(task_id=task_id).first()
-            item_dict['task_id'] = task_id
-            item_dict['task_name'] = query.task_name
+            item_dict['任务id'] = task_id
+            item_dict['任务名称'] = query.task_name if query.task_name else '-'
+            item_dict['用户名'] = query.username if query.username else '-'
+            item_dict['创建时间'] = query.create_time.strftime("%Y-%m-%d %H:%M:%S") if query.create_time else '-'
+
+            # 任务状态
+            if not query.icem_status:
+                item_dict['任务状态'] = '数据上传成功'
+            else:
+                if query.icem_status == Status.PENDING:
+                    item_dict['任务状态'] = 'Icem处理中'
+                elif query.icem_status == Status.FAIL:
+                    item_dict['任务状态'] = 'Icem处理失败'
+                elif query.icem_status == Status.QUEUE:
+                    queue_number = query.task_queue
+                    item_dict['任务状态'] = f'任务排队中, 排队号{queue_number}'
+                else:
+                    if not query.fluent_status:
+                        item_dict['任务状态'] = 'Icem处理成功'
+                    else:
+                        if query.fluent_status == Status.PENDING:
+                            item_dict['任务状态'] = 'Fluent处理中'
+                        elif query.fluent_status == Status.FAIL:
+                            item_dict['任务状态'] = 'Fluent处理失败'
+                        else:
+                            item_dict['任务状态'] = '任务成功'
+
+            # 任务耗时
+            if query.fluent_end:
+                total_seconds = (query.fluent_end - query.create_time).total_seconds()
+            else:
+                # 如果Icem任务失败, 需要用Icem的时间
+                if query.icem_status == Status.FAIL:
+                    total_seconds = (query.icem_end - query.create_time).total_seconds()
+                else:
+                    if query.create_time:
+                        total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
+                            tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
+                    else:
+                        total_seconds = 0
+            m, s = divmod(total_seconds, 60)
+            item_dict['任务耗时'] = f'{int(m)}分{int(s)}秒'
+
+            # 日志/结果文件
+            if query.fluent_result_file_path:
+                item_dict['结果/日志文件'] = query.fluent_result_file_path
+            if query.icem_log_file_path:
+                item_dict['结果/日志文件'] = query.icem_log_file_path
+            if query.fluent_log_file_path:
+                item_dict['结果/日志文件'] = query.fluent_log_file_path
             item_list.append(item_dict)
     return {'code': 200, "data": item_list, "message": "状态获取成功", 'status': True}
