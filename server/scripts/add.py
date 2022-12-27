@@ -64,7 +64,7 @@ async def run():
                 'cpu_model': 'Intel Xeon Icelake 8350C 32C',
                 'v_cpu': 24,
                 'memory': 48,
-                'price': 6,
+                'price': 4.8048,
                 'system_platform': 'CentOS',
             },
             {
@@ -75,7 +75,7 @@ async def run():
                 'cpu_model': 'Intel Xeon Icelake 8350C 32C',
                 'v_cpu': 32,
                 'memory': 64,
-                'price': 6,
+                'price': 6.4064,
                 'system_platform': 'CentOS',
             },
             {
@@ -86,7 +86,7 @@ async def run():
                 'cpu_model': 'Intel Xeon Icelake 8350C 32C',
                 'v_cpu': 48,
                 'memory': 96,
-                'price': 6,
+                'price': 9.6096,
                 'system_platform': 'CentOS',
             },
         ]
