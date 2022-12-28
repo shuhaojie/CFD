@@ -73,7 +73,7 @@ def create_app():
     @app.on_event("startup")
     async def startup():
         r = redis.from_url(
-            'redis://localhost:6379/0',
+            f'redis://{configs.REDIS_HOST}/0',
             decode_responses=True,
             encoding="utf8",
         )
