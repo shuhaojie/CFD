@@ -65,7 +65,7 @@ envsubst <  cfd-deployment.yaml | kubectl apply -f -'''
  
   }
   environment {
-    REGISTRY = '123.56.140.4/:808'
+    REGISTRY = '123.56.140.4:808'
     DOCKERHUB_NAMESPACE = 'cfd'
     APP_NAME = 'cfd-api'
     BRANCH_NAME = 'dev'
