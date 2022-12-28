@@ -33,8 +33,8 @@ rm -rf .env'''
         container('base') {
           withCredentials([usernamePassword(credentialsId : 'harbor' ,passwordVariable : 'DOCKER_PASS' ,usernameVariable : 'DOCKER_USER' ,)]) {
             sh 'echo "$DOCKER_PASS" | docker login $REGISTRY -u "$DOCKER_USER" --password-stdin'
-            sh 'docker build -f Dockerfile -t $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:$BUILD_NUMBER  .'
-            sh 'docker push $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BRANCH_NAME$BUILD_NUMBER '
+            sh 'docker build -f Dockerfile -t $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BUILD_NUMBER  .'
+            sh 'docker push $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BUILD_NUMBER '
           }
  
         }
@@ -53,10 +53,10 @@ envsubst <  cfd-deployment.yaml | kubectl apply -f -'''
           }
  
         }
-	 mail(to: 'shuhaojie@unionstrongtech.com,songyanlong@unionstrongtech.com',subject: "$APP_NAME测试环境后端构建完成！", body: """ALL;
+	 mail(to: 'shuhaojie@unionstrongtech.com', cc: 'songyanlong@unionstrongtech.com', subject: 'CFD测试环境后端构建完成！', body: """ALL;
                        CFD测试环境后端构建完成；
                        分支：$BRANCH_NAME
-                       镜像：$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BRANCH_NAME$BUILD_NUMBER
+                       镜像：$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BUILD_NUMBER
                        服务：$APP_NAME
                        构建详情URL地址: ${BUILD_URL}
                   """)
