@@ -31,7 +31,7 @@ rm -rf .env'''
       agent none
       steps {
         container('base') {
-          withCredentials([usernamePassword(credentialsId : 'mark-harbor' ,passwordVariable : 'DOCKER_PASS' ,usernameVariable : 'DOCKER_USER' ,)]) {
+          withCredentials([usernamePassword(credentialsId : 'harbor' ,passwordVariable : 'DOCKER_PASS' ,usernameVariable : 'DOCKER_USER' ,)]) {
             sh 'echo "$DOCKER_PASS" | docker login $REGISTRY -u "$DOCKER_USER" --password-stdin'
             sh 'docker build -f Dockerfile -t $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BRANCH_NAME$BUILD_NUMBER  .'
             sh 'docker push $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BRANCH_NAME$BUILD_NUMBER '
@@ -46,7 +46,7 @@ rm -rf .env'''
       agent none
       steps {
         container('base') {
-          withCredentials([kubeconfigContent(credentialsId : 'mark-kubeconfig' ,variable : 'TEST_KUBECONFIG_CONTENT' ,)]) {
+          withCredentials([kubeconfigContent(credentialsId : 'k8s-test' ,variable : 'TEST_KUBECONFIG_CONTENT' ,)]) {
             sh '''mkdir ~/.kube
 echo "$TEST_KUBECONFIG_CONTENT" > ~/.kube/config
 envsubst <  cfd-deployment.yaml | kubectl apply -f -'''
