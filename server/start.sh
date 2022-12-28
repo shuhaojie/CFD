@@ -1,0 +1,1 @@
+celery -A worker.celery worker -l info -c 10

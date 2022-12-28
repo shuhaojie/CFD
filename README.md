@@ -42,6 +42,8 @@ python main.py
 
 #### 2. 启动celery
 
+`bash start.sh` 或者
+
 ```bash
 cd server
 celery -A worker.celery worker -l info -c 10
