@@ -4,8 +4,12 @@ from apps.task.tasks import monitor_task
 from config import configs
 
 celery = Celery("CFD")
-celery.conf.broker_url = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0"
-celery.conf.result_backend = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0"
+if configs.ENVIRONMENT == 'local':
+    celery.conf.broker_url = f"redis://{configs.REDIS_HOST}/0"
+    celery.conf.result_backend = f"redis://{configs.REDIS_HOST}/0"
+else:
+    celery.conf.broker_url = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0"
+    celery.conf.result_backend = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0"
 
 
 @celery.task(name="run_task")
