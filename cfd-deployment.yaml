@@ -1,0 +1,92 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: cfd-celery
+  namespace: cfd-test
+  labels:
+    app: cfd-celery
+  annotations:
+    deployment.kubernetes.io/revision: '2'
+    kubesphere.io/creator: admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cfd-celery
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: cfd-celery
+      annotations:
+        kubesphere.io/restartedAt: '2022-12-27T10:05:20.387Z'
+    spec:
+      volumes:
+        - name: timezone
+          hostPath:
+            path: /usr/share/zoneinfo/
+            type: ''
+        - name: cfd-workspaces-test-data
+          persistentVolumeClaim:
+            claimName: cfd-workspaces-test-data
+      containers:
+        - name: cfd-api
+          image: '$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BRANCH_NAME$BUILD_NUMBER'
+          command:
+            - python
+            - /server/main.py
+          workingDir: /server/
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: cfd-test-configmap
+          resources: {}
+          volumeMounts:
+            - name: timezone
+              mountPath: /usr/share/zoneinfo
+            - name: cfd-workspaces-test-data
+              mountPath: /workspaces/data
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+        - name: cfd-celery
+          image: '$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BRANCH_NAME$BUILD_NUMBER'
+          command:
+            - bash
+            - /server/start.sh
+          workingDir: /server/
+          envFrom:
+            - configMapRef:
+                name: cfd-test-configmap
+          resources: {}
+          volumeMounts:
+            - name: timezone
+              mountPath: /usr/share/zoneinfo
+            - name: cfd-workspaces-test-data
+              mountPath: /workspaces/data
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: cfd-celery
+                topologyKey: kubernetes.io/hostname
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
