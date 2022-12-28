@@ -31,7 +31,7 @@ spec:
             claimName: cfd-workspaces-test-data
       containers:
         - name: cfd-api
-          image: '$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BRANCH_NAME$BUILD_NUMBER'
+          image: '$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:$BUILD_NUMBER'
           command:
             - python
             - /server/main.py
@@ -52,7 +52,7 @@ spec:
           terminationMessagePolicy: File
           imagePullPolicy: Always
         - name: cfd-celery
-          image: '$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BRANCH_NAME$BUILD_NUMBER'
+          image: '$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:$BUILD_NUMBER'
           command:
             - bash
             - /server/start.sh
