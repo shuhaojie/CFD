@@ -14,4 +14,5 @@ else:
 
 @celery.task(name="run_task")
 def run_task(task_id):
-    async_to_sync(monitor_task)(task_id)
+    celery_task_id = run_task.request.id
+    async_to_sync(monitor_task)(task_id, celery_task_id)
