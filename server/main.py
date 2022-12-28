@@ -11,7 +11,7 @@ from starlette.staticfiles import StaticFiles
 from starlette.responses import RedirectResponse
 
 from dbs.database import db_init
-from scripts.add import db_table_init
+from scripts.add import db_table_init, run
 from logs import log_init, api_log
 from middleware import middleware_init
 from utils.common_util import write_log
@@ -68,7 +68,7 @@ def create_app():
     init_openapi(app)
 
     # 数据入库
-    db_table_init()
+    # db_table_init()
 
     @app.on_event("startup")
     async def startup():
