@@ -22,6 +22,7 @@
 cd server
 aerich init -t dbs.database.TORTOISE_ORM
 aerich init-db
+aerich upgrade
 ```
 
 ### 4. 入库`FluentProf`和`Admin`表
@@ -47,5 +48,12 @@ python main.py
 ```bash
 cd server
 celery -A worker.celery worker -l info -c 10
+```
+
+在windows中
+
+```bash
+cd server
+celery -A worker.celery worker -l info -c 10 -P solo
 ```
 
