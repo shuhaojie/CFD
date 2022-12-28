@@ -36,7 +36,7 @@ async def monitor_task(task_id):
     monitor_path, prepare_path, archive_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(
         configs.PREPARE_PATH), r"{}".format(configs.ARCHIVE_PATH)
     stl_file_path = os.path.join(monitor_path, task_id + '.stl')
-    minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}/'
+    minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}'
     try:
         # 等待文件写入稳定
         FileTool.write_complete(stl_file_path)
