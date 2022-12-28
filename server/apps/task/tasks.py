@@ -24,7 +24,7 @@ from utils.oss import Minio
 minio = Minio()
 
 
-async def monitor_task(task_id):
+async def monitor_task(task_id, celery_task_id):
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
     await Uknow.filter(task_id=task_id).update(
@@ -241,7 +241,15 @@ async def monitor_task(task_id):
                 data_code='数据不完整')
     except Exception as e:
         await IcemTask.filter(task_id=task_id).delete()  # 如果前面某一步除了問題，需要及時將數據記錄刪掉
+        await Uknow.filter(task_id=task_id).update(
+            icem_end=datetime.now(),
+            icem_status=Status.FAIL,
+            icem_log_file_path='系统错误, 请联系管理员',
+        )
         import traceback
         f = traceback.format_exc()
         print(f)
         api_log.error(e)
+        from worker import celery as celery_app
+        celery_app.control.revoke(celery_task_id, terminate=True)  # 有报错停掉任务
+        time.sleep(3)
