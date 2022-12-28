@@ -14,18 +14,19 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6)
 ) CHARACTER SET utf8mb4;
 CREATE TABLE IF NOT EXISTS `archive` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0701d147-85cd-11ed-a75a-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '27db3ebe-8670-11ed-b9e2-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_type` VARCHAR(255) NOT NULL  COMMENT '任务类别',
     `task_status` VARCHAR(255) NOT NULL  COMMENT '任务状态'
 ) CHARACTER SET utf8mb4 COMMENT='任务归档表';
 CREATE TABLE IF NOT EXISTS `fluent_hardware` (
-    `level` VARCHAR(255) NOT NULL  PRIMARY KEY COMMENT '硬件配置等级',
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `level` VARCHAR(255) NOT NULL  COMMENT '硬件配置等级',
     `fs_instance_type` VARCHAR(255) NOT NULL  COMMENT '速石实例类型',
     `process_num` INT NOT NULL  COMMENT 'fluent进程数' DEFAULT 28,
     `enum` VARCHAR(255) NOT NULL  COMMENT 'fluent求解器' DEFAULT '3dpp',
     `cpu_frequency` DOUBLE NOT NULL  COMMENT 'CPU核心频率',
-    `cpu_model` DOUBLE NOT NULL  COMMENT 'CPU型号',
+    `cpu_model` VARCHAR(255) NOT NULL  COMMENT 'CPU型号',
     `v_cpu` INT NOT NULL  COMMENT '虚拟CPU数',
     `memory` INT NOT NULL  COMMENT '显存数',
     `price` DOUBLE NOT NULL  COMMENT '价格(元/小时)',
@@ -36,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `fluent_prof` (
     `prof_path` VARCHAR(255) NOT NULL  COMMENT 'prof文件路径'
 ) CHARACTER SET utf8mb4 COMMENT='fluent prof文件对应表';
 CREATE TABLE IF NOT EXISTS `fluent_task` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0701d147-85cd-11ed-a75a-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '27db3ebe-8670-11ed-b9e2-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_status` VARCHAR(255)   COMMENT '任务状态',
     `fluent_md5` VARCHAR(255)   COMMENT 'fluent md5值',
@@ -44,17 +45,18 @@ CREATE TABLE IF NOT EXISTS `fluent_task` (
     `job_id` VARCHAR(255)   COMMENT '速石返回的job_id'
 ) CHARACTER SET utf8mb4 COMMENT='Fluent任务表';
 CREATE TABLE IF NOT EXISTS `icem_hardware` (
-    `level` VARCHAR(255) NOT NULL  PRIMARY KEY COMMENT '硬件配置等级',
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `level` VARCHAR(255) NOT NULL  COMMENT '硬件配置等级',
     `fs_instance_type` VARCHAR(255) NOT NULL  COMMENT '速石实例类型',
     `cpu_frequency` DOUBLE NOT NULL  COMMENT 'CPU核心频率',
-    `cpu_model` DOUBLE NOT NULL  COMMENT 'CPU型号',
+    `cpu_model` VARCHAR(255) NOT NULL  COMMENT 'CPU型号',
     `v_cpu` INT NOT NULL  COMMENT '虚拟CPU数',
     `memory` INT NOT NULL  COMMENT '显存数',
     `price` DOUBLE NOT NULL  COMMENT '价格(元/小时)',
     `system_platform` VARCHAR(255) NOT NULL  COMMENT '操作系统类型'
 ) CHARACTER SET utf8mb4 COMMENT='Icem硬件配置表';
 CREATE TABLE IF NOT EXISTS `icem_task` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0701d147-85cd-11ed-a75a-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '27db3ebe-8670-11ed-b9e2-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_status` VARCHAR(255)   COMMENT '任务状态',
     `icem_md5` VARCHAR(255)   COMMENT 'icem md5值',
@@ -67,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `token` (
     `expire_time` DATETIME(6) NOT NULL  COMMENT 'token过期时间'
 ) CHARACTER SET utf8mb4;
 CREATE TABLE IF NOT EXISTS `uknow` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0701d147-85cd-11ed-a75a-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '27db3ebe-8670-11ed-b9e2-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `create_time` DATETIME(6)   COMMENT '创建时间',
     `task_name` VARCHAR(255)   COMMENT '任务名称',
