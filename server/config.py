@@ -84,7 +84,7 @@ class Config(Settings):
     REDIS_HOST: Optional[str] = Field(None, env="REDIS_HOST")
     REDIS_USER: Optional[str] = Field(None, env="REDIS_USER")
     REDIS_MASTER_NAME: Optional[str] = Field(None, env="REDIS_MASTER_NAME")
-    REDIS_PASSWORD: Optional[str] = Field(None, env="REDIS_PASSWORD")
+    REDIS_PASSWD: Optional[str] = Field(None, env="REDIS_PASSWD")
     REDIS_SENTRY: Optional[str] = Field(None, env="REDIS_SENTRY")
 
     # 第三方url
