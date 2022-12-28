@@ -71,7 +71,13 @@ async def send_configs(query_data: SendDataRequestSchema):
 
 # https://stackoverflow.com/a/70657621/10844937
 @uknow_router.post("/upload_file", name="上传文件", response_model=BaseResponse)
-async def upload(file: UploadFile, background_tasks: BackgroundTasks):
+async def upload(file: UploadFile):
+    if not os.path.exists(configs.MONITOR_PATH):
+        os.makedirs(configs.MONITOR_PATH)
+    if not os.path.exists(configs.PREPARE_PATH):
+        os.makedirs(configs.PREPARE_PATH)
+    if not os.path.exists(configs.ARCHIVE_PATH):
+        os.makedirs(configs.ARCHIVE_PATH)
     try:
         contents = file.file.read()
         write_path = os.path.join(configs.MONITOR_PATH, file.filename)
