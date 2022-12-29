@@ -128,6 +128,7 @@ async def monitor_task(task_id, celery_task_id):
                     if state == 'COMPLETE':
                         print(time.time() - start_time)
                         print('Icem finish!!!!')
+                        await IcemTask.filter(task_id=task_id).delete()
                         icem_start, icem_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                             res['finishedAt']) + timedelta(hours=8)
                         await Uknow.filter(task_id=task_id).update(
@@ -203,6 +204,8 @@ async def monitor_task(task_id, celery_task_id):
                                 if os.path.isdir(archive_path):
                                     shutil.rmtree(archive_path)
                                 shutil.move(file_path, configs.ARCHIVE_PATH)
+                                # (13) 从FluentTask中及时删除掉
+                                await FluentTask.filter(task_id=task_id).delete()
                                 icem_finish = True
                                 fluent_finish = True
                             elif state == 'FAILED':
@@ -254,6 +257,7 @@ async def monitor_task(task_id, celery_task_id):
                 data_code='数据不完整')
     except Exception as e:
         await IcemTask.filter(task_id=task_id).delete()  # 如果前面某一步除了問題，需要及時將數據記錄刪掉
+        await FluentTask.filter(task_id=task_id).delete()  # 如果前面某一步除了問題，需要及時將數據記錄刪掉
         await Uknow.filter(task_id=task_id).update(
             icem_end=datetime.now(),
             icem_status=Status.FAIL,
