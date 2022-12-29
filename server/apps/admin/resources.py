@@ -63,11 +63,18 @@ class FluentLevelComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
         if query.fluent_hardware_level == 'low':
-            return '低'
+            fluent = '低'
         elif query.fluent_hardware_level == 'medium':
-            return '中'
+            fluent = '中'
         else:
-            return '高'
+            fluent = '高'
+        if query.icem_hardware_level == 'low':
+            icem = '低'
+        elif query.icem_hardware_level == 'medium':
+            icem = '中'
+        else:
+            icem = '高'
+        return f'{fluent}/{icem}'
 
 
 class StatusComputeFields(ComputeField):
@@ -165,6 +172,7 @@ class UknowResource(Model):
         StatusComputeFields(name="data_status", label="任务状态", input_=inputs.DisplayOnly()),
         TotalTimeComputeFields(name="fluent_duration", label="任务耗时", input_=inputs.DisplayOnly()),
         WidgetComputeFields(name="widgets", label="任务花费", input_=inputs.DisplayOnly()),
+        FluentLevelComputeFields(name="fluent_hardware_level", label="硬件配置", input_=inputs.DisplayOnly()),
         LogFileComputeFields(name="fluent_result_file_path", label="结果/日志文件", input_=inputs.DisplayOnly()),
     ]
 
