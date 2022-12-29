@@ -405,11 +405,13 @@ def reverse_job(job_id):
 def task_widget(icem_start, icem_end, icem_price, fluent_start, fluent_end, fluent_price, task_id):
     icem_duration = (icem_end - icem_start).total_seconds()
     fluent_duration = (fluent_end - fluent_start).total_seconds()
-
+    # 计算价格: 时间*价格
     compute_price = icem_price * icem_duration / 3600.0 + fluent_price * fluent_duration / 3600.0
+    # 存储价格: 时间换算成小时, 乘以单价0.508, 再乘以150G, 除以每个月720个小时
     storage_price = ((icem_duration + fluent_duration) / 3600.0) * 0.508 * 150 / 720
     file_size = os.path.getsize(os.path.join(configs.PREPARE_PATH, task_id, 'ensight_result.encas'))
-    download_price = file_size * 5 / (1024.0 * 1024.0 * 1024.0)
+    # 下载价格: 每GB收费0.8246
+    download_price = file_size * 0.8246 / (1024.0 * 1024.0 * 1024.0)
     return round(compute_price + storage_price + download_price, 2)
 
 
