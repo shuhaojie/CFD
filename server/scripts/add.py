@@ -98,6 +98,14 @@ async def run():
                 **hardware
             )
 
+    # 4. 创建路径
+    if not os.path.exists(configs.MONITOR_PATH):
+        os.makedirs(configs.MONITOR_PATH)
+    if not os.path.exists(configs.PREPARE_PATH):
+        os.makedirs(configs.PREPARE_PATH)
+    if not os.path.exists(configs.ARCHIVE_PATH):
+        os.makedirs(configs.ARCHIVE_PATH)
+
 
 def db_table_init():
     run_async(run())
