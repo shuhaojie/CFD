@@ -53,8 +53,8 @@ envsubst <  cfd-deployment.yaml | kubectl apply -f -'''
           }
  
         }
-	 mail(to: 'shuhaojie@unionstrongtech.com', cc: 'songyanlong@unionstrongtech.com', subject: 'CFD测试环境后端构建完成！', body: """ALL;
-                       CFD测试环境后端构建完成；
+	 mail(to: 'shuhaojie@unionstrongtech.com', cc: 'songyanlong@unionstrongtech.com', subject: '测试环境后端构建完成！', body: """ALL;
+                       CFD测试环境构建完成；
                        分支：$BRANCH_NAME
                        镜像：$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BUILD_NUMBER
                        服务：$APP_NAME

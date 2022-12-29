@@ -22,9 +22,9 @@ spec:
         kubesphere.io/restartedAt: '2022-12-27T10:05:20.387Z'
     spec:
       volumes:
-        - name: timezone
+        - name: host-time
           hostPath:
-            path: /usr/share/zoneinfo/
+            path: /etc/localtime
             type: ''
         - name: cfd-workspaces-test-data
           persistentVolumeClaim:
@@ -44,10 +44,11 @@ spec:
                 name: cfd-test-configmap
           resources: {}
           volumeMounts:
-            - name: timezone
-              mountPath: /usr/share/zoneinfo
             - name: cfd-workspaces-test-data
               mountPath: /workspaces/data
+            - name: host-time
+              readOnly: true
+              mountPath: /etc/localtime
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           imagePullPolicy: Always
@@ -62,10 +63,11 @@ spec:
                 name: cfd-test-configmap
           resources: {}
           volumeMounts:
-            - name: timezone
-              mountPath: /usr/share/zoneinfo
             - name: cfd-workspaces-test-data
               mountPath: /workspaces/data
+            - name: host-time
+              readOnly: true
+              mountPath: /etc/localtime
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           imagePullPolicy: Always
