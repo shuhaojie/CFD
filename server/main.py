@@ -11,7 +11,6 @@ from starlette.staticfiles import StaticFiles
 from starlette.responses import RedirectResponse
 
 from dbs.database import db_init
-from scripts.add import db_table_init, run
 from logs import log_init, api_log
 from middleware import middleware_init
 from utils.common_util import write_log
@@ -74,13 +73,13 @@ def create_app():
     async def startup():
         if configs.ENVIRONMENT == 'local':
             r = redis.from_url(
-                f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0",
+                f"redis://{configs.REDIS_HOST}/0",
                 decode_responses=True,
                 encoding="utf8",
             )
         else:
             r = redis.from_url(
-                f"redis://{configs.REDIS_HOST}/0",
+                f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0",
                 decode_responses=True,
                 encoding="utf8",
             )
