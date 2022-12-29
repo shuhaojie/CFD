@@ -131,6 +131,15 @@ class LogFileComputeFields(ComputeField):
             return query.fluent_log_file_path
 
 
+class WidgetComputeFields(ComputeField):
+    async def get_value(self, request: Request, obj: dict):
+        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        if query.widgets:
+            return f'{query.widgets}元'
+        else:
+            return '-'
+
+
 @app.register
 class UknowResource(Model):
     label = "任务状态"
@@ -155,6 +164,7 @@ class UknowResource(Model):
         DateTimeComputeFields(name="create_time", label="创建时间", input_=inputs.DisplayOnly()),
         StatusComputeFields(name="data_status", label="任务状态", input_=inputs.DisplayOnly()),
         TotalTimeComputeFields(name="fluent_duration", label="任务耗时", input_=inputs.DisplayOnly()),
+        WidgetComputeFields(name="widgets", label="任务花费", input_=inputs.DisplayOnly()),
         LogFileComputeFields(name="fluent_result_file_path", label="结果/日志文件", input_=inputs.DisplayOnly()),
     ]
 

@@ -139,6 +139,12 @@ async def get_status(task_id_list: List[str] = Query([], title="task_id列表"))
             m, s = divmod(total_seconds, 60)
             item_dict['任务耗时'] = f'{int(m)}分{int(s)}秒'
 
+            # 任务花费
+            if query.widgets:
+                item_dict['任务花费'] = f'{query.widgets}元'
+            else:
+                item_dict['任务花费'] = '-'
+
             # 日志/结果文件
             if query.fluent_result_file_path:
                 item_dict['结果/日志文件'] = query.fluent_result_file_path
