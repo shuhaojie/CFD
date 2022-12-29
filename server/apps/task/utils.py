@@ -7,10 +7,15 @@ import shutil
 import time
 import zipfile
 import re
+import sys
 import yaml
 import hashlib
 from glob import glob
 from datetime import datetime
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, BASE_DIR)
+print(BASE_DIR)
 
 from logs import api_log
 from config import configs
@@ -394,8 +399,18 @@ def reverse_job(job_id):
     headers = {'Authorization': f'Bearer {token}'}
     base_url = f'http://120.48.150.243/api/v1/jobs/{job_id}'
     r = requests.get(base_url, headers=headers)
-    state = r.json()['state']
-    return state
+    return r.json()
+
+
+def task_widget(icem_start, icem_end, icem_price, fluent_start, fluent_end, fluent_price, task_id):
+    icem_duration = (icem_end - icem_start).total_seconds()
+    fluent_duration = (fluent_end - fluent_start).total_seconds()
+
+    compute_price = icem_price * icem_duration / 3600.0 + fluent_price * fluent_duration / 3600.0
+    storage_price = ((icem_duration + fluent_duration) / 3600.0) * 0.508 * 150 / 720
+    file_size = os.path.getsize(os.path.join(configs.PREPARE_PATH, task_id, 'ensight_result.encas'))
+    download_price = file_size * 5 / (1024.0 * 1024.0 * 1024.0)
+    return round(compute_price + storage_price + download_price, 2)
 
 
 def task_fail(task_id, job_id, headers):
@@ -414,5 +429,7 @@ def task_fail(task_id, job_id, headers):
 
 
 if __name__ == '__main__':
-    # create_remote_folder("foo")
-    pass
+    res = reverse_job('181')
+    from dateutil.parser import parse
+
+    print(parse(res['finishedAt']))
