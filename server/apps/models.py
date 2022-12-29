@@ -17,16 +17,11 @@ class Uknow(AbstractBaseModel):
 
     # 跑Icem任务的硬件配置
     icem_hardware_level = fields.CharField(description="Icem硬件配置等级", max_length=MyConstant.MAX_LENGTH)
-    # 跑 Icem bash的时候需要的参数, 提供给bash脚本, send_config会给过来
-    icem_params = fields.TextField(description="Icem参数", null=True)
-    # GEO_EXTRACT_CURVES = fields.FloatField()
-    # GEO_SET_FAMILY_PARAMS = fields.FloatField()
 
     # 跑Fluent任务的硬件配置
     fluent_hardware_level = fields.CharField(description="Fluent硬件配置等级", max_length=MyConstant.MAX_LENGTH)
     # 跑Fluent bash的时候额外需要的参数, 提供给bash脚本
-    fluent_params = fields.TextField(description="Fluent参数", null=True)
-    # prof_number = fields.IntField(description="prof文件编号")
+    fluent_prof = fields.TextField(description="fluent_prof文件")
 
     # 任务整体排队号
     task_queue = fields.IntField(description="任务排队号", null=True)
@@ -55,7 +50,6 @@ class Uknow(AbstractBaseModel):
     icem_start = fields.DatetimeField(description='Icem开始时间', null=True)
     icem_end = fields.DatetimeField(description='Icem结束时间', null=True)
     icem_duration = fields.FloatField(description="Icem任务执行时间(秒)", null=True)
-    icem_widgets = fields.FloatField(description="Icem任务花费(RMB/元)", null=True)
 
     # 共五种: queue, schedule, pending, success, fail
     fluent_status = fields.CharField(description="Fluent任务执行状态",
@@ -73,7 +67,7 @@ class Uknow(AbstractBaseModel):
     fluent_start = fields.DatetimeField(description='Fluent开始时间', null=True)
     fluent_end = fields.DatetimeField(description='Fluent结束时间', null=True)
     fluent_duration = fields.FloatField(description="Fluent任务执行时间(秒)", null=True)
-    fluent_widgets = fields.FloatField(description="Fluent任务花费(RMB/元", null=True)
+    widgets = fields.FloatField(description="任务花费(RMB/元", null=True)
 
     class Meta:
         table = "uknow"

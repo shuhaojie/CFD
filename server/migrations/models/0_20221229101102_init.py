@@ -14,7 +14,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6)
 ) CHARACTER SET utf8mb4;
 CREATE TABLE IF NOT EXISTS `archive` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '27db3ebe-8670-11ed-b9e2-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0b1d2612-871e-11ed-87b8-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_type` VARCHAR(255) NOT NULL  COMMENT '任务类别',
     `task_status` VARCHAR(255) NOT NULL  COMMENT '任务状态'
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `fluent_prof` (
     `prof_path` VARCHAR(255) NOT NULL  COMMENT 'prof文件路径'
 ) CHARACTER SET utf8mb4 COMMENT='fluent prof文件对应表';
 CREATE TABLE IF NOT EXISTS `fluent_task` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '27db3ebe-8670-11ed-b9e2-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0b1d2612-871e-11ed-87b8-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_status` VARCHAR(255)   COMMENT '任务状态',
     `fluent_md5` VARCHAR(255)   COMMENT 'fluent md5值',
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `icem_hardware` (
     `system_platform` VARCHAR(255) NOT NULL  COMMENT '操作系统类型'
 ) CHARACTER SET utf8mb4 COMMENT='Icem硬件配置表';
 CREATE TABLE IF NOT EXISTS `icem_task` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '27db3ebe-8670-11ed-b9e2-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0b1d2612-871e-11ed-87b8-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_status` VARCHAR(255)   COMMENT '任务状态',
     `icem_md5` VARCHAR(255)   COMMENT 'icem md5值',
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `token` (
     `expire_time` DATETIME(6) NOT NULL  COMMENT 'token过期时间'
 ) CHARACTER SET utf8mb4;
 CREATE TABLE IF NOT EXISTS `uknow` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '27db3ebe-8670-11ed-b9e2-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0b1d2612-871e-11ed-87b8-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `create_time` DATETIME(6)   COMMENT '创建时间',
     `task_name` VARCHAR(255)   COMMENT '任务名称',
@@ -77,9 +77,8 @@ CREATE TABLE IF NOT EXISTS `uknow` (
     `mac_address` VARCHAR(255) NOT NULL  COMMENT 'MAC地址',
     `md5` VARCHAR(255) NOT NULL  COMMENT '文件md5值',
     `icem_hardware_level` VARCHAR(255) NOT NULL  COMMENT 'Icem硬件配置等级',
-    `icem_params` LONGTEXT   COMMENT 'Icem参数',
     `fluent_hardware_level` VARCHAR(255) NOT NULL  COMMENT 'Fluent硬件配置等级',
-    `fluent_params` LONGTEXT   COMMENT 'Fluent参数',
+    `fluent_prof` LONGTEXT NOT NULL  COMMENT 'fluent_prof文件',
     `task_queue` INT   COMMENT '任务排队号',
     `data_status` VARCHAR(255)   COMMENT '数据上传状态',
     `data_code` VARCHAR(255)   COMMENT '数据上传状态码',
@@ -90,7 +89,6 @@ CREATE TABLE IF NOT EXISTS `uknow` (
     `icem_start` DATETIME(6)   COMMENT 'Icem开始时间',
     `icem_end` DATETIME(6)   COMMENT 'Icem结束时间',
     `icem_duration` DOUBLE   COMMENT 'Icem任务执行时间(秒)',
-    `icem_widgets` DOUBLE   COMMENT 'Icem任务花费(RMB/元)',
     `fluent_status` VARCHAR(255)   COMMENT 'Fluent任务执行状态',
     `fluent_queue_number` INT   COMMENT 'Fluent排队号',
     `fluent_log_file_path` VARCHAR(1024)   COMMENT 'fluent日志文件',
@@ -98,7 +96,7 @@ CREATE TABLE IF NOT EXISTS `uknow` (
     `fluent_start` DATETIME(6)   COMMENT 'Fluent开始时间',
     `fluent_end` DATETIME(6)   COMMENT 'Fluent结束时间',
     `fluent_duration` DOUBLE   COMMENT 'Fluent任务执行时间(秒)',
-    `fluent_widgets` DOUBLE   COMMENT 'Fluent任务花费(RMB/元'
+    `widgets` DOUBLE   COMMENT '任务花费(RMB/元'
 ) CHARACTER SET utf8mb4 COMMENT='uknow交互表';
 CREATE TABLE IF NOT EXISTS `aerich` (
     `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
