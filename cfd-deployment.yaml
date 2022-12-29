@@ -22,10 +22,6 @@ spec:
         kubesphere.io/restartedAt: '2022-12-27T10:05:20.387Z'
     spec:
       volumes:
-        - name: timezone
-          hostPath:
-            path: /usr/share/zoneinfo/
-            type: ''
         - name: host-time
           hostPath:
             path: /etc/localtime
@@ -48,8 +44,6 @@ spec:
                 name: cfd-test-configmap
           resources: {}
           volumeMounts:
-            - name: timezone
-              mountPath: /usr/share/zoneinfo
             - name: cfd-workspaces-test-data
               mountPath: /workspaces/data
             - name: host-time
@@ -69,8 +63,6 @@ spec:
                 name: cfd-test-configmap
           resources: {}
           volumeMounts:
-            - name: timezone
-              mountPath: /usr/share/zoneinfo
             - name: cfd-workspaces-test-data
               mountPath: /workspaces/data
             - name: host-time
