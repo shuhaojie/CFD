@@ -4,20 +4,20 @@
 """
 
 import os
-import ast
 import time
 import pytz
 import shutil
 from tortoise import Tortoise
 from tortoise.functions import Max
+from dateutil.parser import parse
 from datetime import datetime, timedelta
 
 from config import configs
-from apps.models import Uknow, IcemTask, Token, FluentTask, FluentProf, Archive
+from apps.models import Uknow, IcemTask, Token, FluentTask, FluentProf, Archive, IcemHardware, FluentHardware
 from dbs.database import TORTOISE_ORM
 from utils.constant import Status
 from apps.task.utils import FileTool, get_token, download_file, upload_file, create_job, create_remote_folder, \
-    reverse_job, download_complete, task_fail
+    reverse_job, download_complete, task_fail, task_widget
 from logs import api_log
 from utils.oss import Minio
 
@@ -42,7 +42,11 @@ async def monitor_task(task_id, celery_task_id):
         FileTool.write_complete(stl_file_path)
         # md5校验
         query = await Uknow.filter(task_id=task_id).first()
-        md5 = query.md5
+        md5, icem_level, fluent_level, fluent_prof = query.md5, query.icem_hardware_level, \
+            query.fluent_hardware_level, query.fluent_prof
+        icem_query = await IcemHardware.filter(level=icem_level).first()
+        fluent_query = await FluentHardware.filter(level=fluent_level).first()
+        icem_price, fluent_price = icem_query.price, fluent_query.price
         current_hash = FileTool.get_md5(stl_file_path)
         if md5 == current_hash:
             uknow_data_status = 'success'
@@ -115,14 +119,16 @@ async def monitor_task(task_id, celery_task_id):
                 # (1) 任务成功，取回fluent.msh，并移动到prepare路径下
                 icem_finish = False
                 while not icem_finish:
-                    state = reverse_job(job_id)
+                    res = reverse_job(job_id)
+                    state = res['state']
                     print(state)
                     if state == 'COMPLETE':
                         print(time.time() - start_time)
                         print('Icem finish!!!!')
-                        icem_end = datetime.now()
+                        icem_start, icem_end = parse(res['createdAt']), parse(res['finishedAt'])
                         await Uknow.filter(task_id=task_id).update(
                             icem_status=Status.SUCCESS,
+                            icem_start=icem_start,
                             icem_end=icem_end,
                             icem_duration=float((icem_end - icem_start).seconds),
                         )
@@ -134,9 +140,6 @@ async def monitor_task(task_id, celery_task_id):
                         fluent_msh_file = os.path.join(fluent_dst_path, 'fluent.msh')
                         download_complete(fluent_msh_file)
                         # (3) 将prof文件复制到文件夹中, 具体要根据用户的选择
-                        query = await Uknow.filter(task_id=task_id).first()
-                        fluent_params = query.fluent_params
-                        fluent_prof = ast.literal_eval(fluent_params)['prof']
                         query = await FluentProf.filter(prof_name=fluent_prof).first()
                         prof_path = query.prof_path
                         # 移动prof文件并重命名
@@ -165,7 +168,8 @@ async def monitor_task(task_id, celery_task_id):
                         # (8) 对任务状态进行轮询
                         fluent_finish = False
                         while not fluent_finish:
-                            state = reverse_job(job_id)
+                            res = reverse_job(job_id)
+                            state = res['state']
                             print(state)
                             if state == 'COMPLETE':
                                 url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result/ensight_result.encas'
@@ -177,13 +181,16 @@ async def monitor_task(task_id, celery_task_id):
                                 # (10) 将文件结果上传到minio
                                 minio.upload_file(f'{task_id}/ensight_result.encas', fluent_result_zip)
                                 # (11) 更新Uknow, FluentTask表
-                                fluent_end = datetime.now()
-
+                                fluent_start, fluent_end = parse(res['createdAt']), parse(res['finishedAt'])
+                                widget = task_widget(icem_start, icem_end, icem_price, fluent_start, fluent_end,
+                                                     fluent_price, task_id)
                                 await Uknow.filter(task_id=task_id).update(
                                     fluent_status=Status.SUCCESS,
+                                    fluent_start=fluent_start,
                                     fluent_end=fluent_end,
                                     fluent_duration=float((fluent_end - fluent_start).seconds),
                                     fluent_result_file_path=f'{minio_base_url}/ensight_result.encas',
+                                    widgets=widget,
                                 )
                                 # (12) 将文件夹移动到archive下进行归档
                                 archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
