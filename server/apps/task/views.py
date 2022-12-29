@@ -1,4 +1,5 @@
 import os
+import uuid
 import shutil
 import pytz
 import datetime
@@ -66,7 +67,9 @@ async def upload(file: UploadFile,
         second = f'0{str(now_time.second)}' if now_time.second < 10 else f'{str(now_time.second)}'
         task_id = f'{now_time.year}{month}{day}{hour}{minute}{second}0{index}'
         # 5. 数据入库
+        str_uuid = str(uuid.uuid1())
         await Uknow.create(
+            uuid=str_uuid,
             task_id=task_id,
             md5=md5,
             username=username,
