@@ -125,7 +125,8 @@ async def monitor_task(task_id, celery_task_id):
                     if state == 'COMPLETE':
                         print(time.time() - start_time)
                         print('Icem finish!!!!')
-                        icem_start, icem_end = parse(res['createdAt']), parse(res['finishedAt'])
+                        icem_start, icem_end = parse(res['createdAt']) + timedelta(hours=8), parse(
+                            res['finishedAt']) + timedelta(hours=8)
                         await Uknow.filter(task_id=task_id).update(
                             icem_status=Status.SUCCESS,
                             icem_start=icem_start,
@@ -181,7 +182,8 @@ async def monitor_task(task_id, celery_task_id):
                                 # (10) 将文件结果上传到minio
                                 minio.upload_file(f'{task_id}/ensight_result.encas', fluent_result_zip)
                                 # (11) 更新Uknow, FluentTask表
-                                fluent_start, fluent_end = parse(res['createdAt']), parse(res['finishedAt'])
+                                fluent_start, fluent_end = parse(res['createdAt']) + timedelta(hours=8), parse(
+                                    res['finishedAt']) + timedelta(hours=8)
                                 widget = task_widget(icem_start, icem_end, icem_price, fluent_start, fluent_end,
                                                      fluent_price, task_id)
                                 await Uknow.filter(task_id=task_id).update(
