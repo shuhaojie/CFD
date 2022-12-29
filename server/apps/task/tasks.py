@@ -5,6 +5,8 @@
 
 import os
 import time
+import uuid
+
 import pytz
 import shutil
 from tortoise import Tortoise
@@ -69,7 +71,8 @@ async def monitor_task(task_id, celery_task_id):
             # 计算Icem zip包的md5值
             icem_hash = FileTool.get_md5(icem_zip_file)
             print(icem_hash)
-            await IcemTask.create(task_id=task_id, icem_md5=icem_hash)
+            str_uuid = str(uuid.uuid1())
+            await IcemTask.create(task_id=task_id, icem_md5=icem_hash, uuid=str_uuid)
 
             # 对并发数进行判断
             query = await IcemTask.filter()
@@ -154,7 +157,8 @@ async def monitor_task(task_id, celery_task_id):
 
                         # (5) 计算fluent的md5
                         fluent_md5 = FileTool.get_md5(output_filename)
-                        await FluentTask.create(task_id=task_id, fluent_md5=fluent_md5)
+                        str_uuid = str(uuid.uuid1())
+                        await FluentTask.create(uuid=str_uuid, task_id=task_id, fluent_md5=fluent_md5)
                         # (6) 上传文件到速石
                         upload_file(task_id, 'fluent', headers)
                         # (7) 创建fluent任务
