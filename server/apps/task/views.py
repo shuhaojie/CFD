@@ -4,12 +4,13 @@ import shutil
 import pytz
 import datetime
 from fastapi import UploadFile
+from tortoise.functions import Max
 from fastapi_restful.inferring_router import InferringRouter
 from pydantic.typing import Literal
 from typing import List
 from fastapi import Query
 
-from apps.models import Uknow
+from apps.models import Uknow, IcemTask
 from .utils import FileTool
 from .schemas import UploadResponse
 from worker import run_task
@@ -83,7 +84,13 @@ async def upload(file: UploadFile,
         standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.stl')
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
-        run_task.apply_async((task_id,))
+        total_tasks = await IcemTask.filter(status=Status.PENDING).all()
+        if len(total_tasks) < 10:
+            run_task.apply_async((task_id,))
+        else:
+            # 如果任务数过多, 需要排队
+            max_queue = await Uknow.all().annotate(data=Max('task_queue')).values('data')
+            await Uknow.filter(task_id=task_id).update(task_queue=max_queue[0]['data']+1)
         return {'code': 200, "message": "文件上传成功", 'task_id': task_id, 'status': True}
 
 
