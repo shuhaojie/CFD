@@ -89,7 +89,7 @@ async def upload(file: UploadFile,
         if len(total_tasks) < 10:
             run_task.apply_async((task_id,))
             await Uknow.filter(task_id=task_id).update(
-                icem_statue=Status.PENDING,
+                icem_status=Status.PENDING,
                 icem_start=datetime.datetime.now(),
                 create_time=datetime.datetime.now(),
             )
