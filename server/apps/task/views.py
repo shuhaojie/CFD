@@ -85,7 +85,7 @@ async def upload(file: UploadFile,
         standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.stl')
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
-        total_tasks = await IcemTask.filter(status=Status.PENDING).all()
+        total_tasks = await IcemTask.filter(task_status=Status.PENDING).all()
         if len(total_tasks) < 10:
             run_task.apply_async((task_id,))
             await Uknow.filter(task_id=task_id).update(
