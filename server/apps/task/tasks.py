@@ -213,6 +213,7 @@ async def monitor_task(task_id, celery_task_id):
                                 # 更新状态
                                 await Uknow.filter(task_id=task_id).update(
                                     fluent_status=Status.FAIL,
+                                    fluent_end=datetime.now(),
                                     fluent_log_file_path=f'{minio_base_url}/stderr.txt',
                                 )
                                 await FluentTask.filter(task_id=task_id).delete()
