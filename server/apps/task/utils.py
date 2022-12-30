@@ -415,8 +415,11 @@ def reverse_job(job_id):
 
 
 def task_widget(icem_start, icem_end, icem_price, fluent_start, fluent_end, fluent_price, task_id):
+    if fluent_start is None:
+        fluent_duration = 0
+    else:
+        fluent_duration = (fluent_end - fluent_start).total_seconds()
     icem_duration = (icem_end - icem_start).total_seconds()
-    fluent_duration = (fluent_end - fluent_start).total_seconds()
     # 计算价格: 时间*价格
     compute_price = icem_price * icem_duration / 3600.0 + fluent_price * fluent_duration / 3600.0
     # 存储价格: 时间换算成小时, 乘以单价0.508, 再乘以150G, 除以每个月720个小时

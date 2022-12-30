@@ -211,10 +211,14 @@ async def monitor_task(task_id, celery_task_id):
                             elif state == 'FAILED':
                                 task_fail(task_id, job_id, headers)
                                 # 更新状态
+                                fluent_end = datetime.now()
+                                widget = task_widget(icem_start, icem_end, icem_price, fluent_start, fluent_end,
+                                                     fluent_price, task_id)
                                 await Uknow.filter(task_id=task_id).update(
                                     fluent_status=Status.FAIL,
-                                    fluent_end=datetime.now(),
+                                    fluent_end=fluent_end,
                                     fluent_log_file_path=f'{minio_base_url}/stderr.txt',
+                                    widgets=widget,
                                 )
                                 await FluentTask.filter(task_id=task_id).delete()
                                 await Archive.create(
@@ -229,10 +233,14 @@ async def monitor_task(task_id, celery_task_id):
                     elif state == 'FAILED':
                         task_fail(task_id, job_id, headers)
                         # 更新状态
+                        icem_end = datetime.now()
+                        widget = task_widget(icem_start, icem_end, icem_price, None, None,
+                                             fluent_price, task_id)
                         await Uknow.filter(task_id=task_id).update(
                             icem_status=Status.FAIL,
-                            icem_end=datetime.now(),
+                            icem_end=icem_end,
                             icem_log_file_path=f'{minio_base_url}/stderr.txt',
+                            widgets=widget,
                         )
                         await IcemTask.filter(task_id=task_id).delete()
                         await Archive.create(
