@@ -1,4 +1,5 @@
 import os
+import pytz
 import requests
 import base64
 import json
@@ -11,15 +12,15 @@ import sys
 import yaml
 import hashlib
 from glob import glob
-from datetime import datetime
+from datetime import datetime, timedelta
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, BASE_DIR)
-print(BASE_DIR)
 
 from logs import api_log
 from config import configs
 from utils.oss import Minio
+from apps.models import Token, Uknow, IcemHardware, FluentHardware
 
 minio = Minio()
 
@@ -301,7 +302,7 @@ class FileTool:
             return a_hash
 
 
-def get_token():
+def generate_token():
     base_url = "http://120.48.150.243/api/v1/auth/signin"
     password = 'fs@2022!'
     encoded_password = str(base64.b64encode(password.encode('utf-8')), 'utf-8')
@@ -309,6 +310,33 @@ def get_token():
     r = requests.post(base_url, json=params)
     token = r.json()['accessToken']
     return token
+
+
+async def get_token():
+    # 判断token是否存在
+    query = await Token.filter().first()
+    if query:
+        # 如果存在, 先判断token是否过期
+        expire_time = query.expire_time
+        now = datetime.now().replace(tzinfo=pytz.timezone('UTC'))
+        # 如果沒有过期，从数据库中获取token
+        if expire_time > now:
+            token = query.access_token
+            return token
+        # 如果过期，需要重新获取一次token
+        else:
+            token = generate_token()
+            # 获得完token之后，更新一下数据库
+            expire_time = datetime.now() + timedelta(hours=10)
+            await Token.filter().update(access_token=token, expire_time=expire_time)
+            return token
+    else:
+        # token不存在，也需要获取一下token
+        token = generate_token()
+        # 获得完token之後，将token入库
+        expire_time = datetime.now() + timedelta(hours=10)
+        await Token.create(access_token=token, expire_time=expire_time)
+        return token
 
 
 def create_remote_folder(task_id, headers):
@@ -414,12 +442,18 @@ def reverse_job(job_id):
     return r.json()
 
 
-def task_widget(icem_start, icem_end, icem_price, fluent_start, fluent_end, fluent_price, task_id):
+async def task_widget(task_id):
+    query = await Uknow.filter(task_id=task_id).first()
+    icem_start, icem_end, icem_level = query.icem_start, query.icem_end, query.icem_hardware_level
+    fluent_start, fluent_end, fluent_level = query.fluent_start, query.fluent_end, query.fluent_hardware_level
     if fluent_start is None:
         fluent_duration = 0
     else:
         fluent_duration = (fluent_end - fluent_start).total_seconds()
     icem_duration = (icem_end - icem_start).total_seconds()
+    icem_query = await IcemHardware.filter(level=icem_level).first()
+    fluent_query = await FluentHardware.filter(level=fluent_level).first()
+    icem_price, fluent_price = icem_query.price, fluent_query.price
     # 计算价格: 时间*价格
     compute_price = icem_price * icem_duration / 3600.0 + fluent_price * fluent_duration / 3600.0
     # 存储价格: 时间换算成小时, 乘以单价0.508, 再乘以150G, 除以每个月720个小时
