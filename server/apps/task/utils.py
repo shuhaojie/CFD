@@ -392,6 +392,10 @@ def create_job(task_id, task_type, md5, headers, hardware_level='middle', solver
             f = open('./static/sushi/fluent-2019_b1.c1.24.json', encoding='UTF-8')
         else:
             f = open('./static/sushi/fluent-2019_b1.c1.48.json', encoding='UTF-8')
+        if hardware_level == 'low':
+            parallel_number = 24
+        else:
+            parallel_number = 28
         json_data = json.load(f)
         json_data['inputs'][0]['value'] = f'/usc/{task_id}/{task_type}.zip'
         json_data['inputs'][1]['value'] = solver
