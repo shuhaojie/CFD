@@ -114,7 +114,7 @@ async def monitor_task(task_id, celery_task_id):
                 # 上传Icem数据
                 upload_file(task_id, 'icem', headers)
                 # 5) 再发申请硬件资源的请求
-                r = create_job(task_id, 'icem', icem_hash, headers)
+                r = create_job(task_id, 'icem', icem_hash, headers, icem_level)
                 job_id = r.json()['id']
                 await IcemTask.filter(task_id=task_id).update(job_id=job_id)
                 # 6) 对任务状态进行轮询
@@ -163,7 +163,7 @@ async def monitor_task(task_id, celery_task_id):
                         # (6) 上传文件到速石
                         upload_file(task_id, 'fluent', headers)
                         # (7) 创建fluent任务
-                        r = create_job(task_id, 'fluent', fluent_md5, headers)
+                        r = create_job(task_id, 'fluent', fluent_md5, headers, fluent_level)
                         job_id = r.json()['id']
                         await FluentTask.filter(task_id=task_id).update(job_id=job_id)
                         fluent_start = datetime.now()

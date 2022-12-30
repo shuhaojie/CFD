@@ -373,25 +373,33 @@ def create_job(task_id, task_type, md5, headers, hardware_level='middle', solver
         # 目前暂时用这个固定配置, 这个是根据用户选择的配置来的
         if hardware_level == 'middle':
             f = open('./static/sushi/icem_b1.c1.32.json', encoding='UTF-8')
-            json_data = json.load(f)
-            json_data['inputs'][0]['value'] = f'/usc/{task_id}/{task_type}.zip'
-            json_data['inputs'][1]['value'] = md5
-            json_data['name'] = task_name
-            # https://stackoverflow.com/a/22567429/10844937
-            r = requests.post(base_url, json=json_data, headers=headers)
-            return r
+        elif hardware_level == 'low':
+            f = open('./static/sushi/icem_b1.c1.24.json', encoding='UTF-8')
+        else:
+            f = open('./static/sushi/icem_b1.c1.48.json', encoding='UTF-8')
+        json_data = json.load(f)
+        json_data['inputs'][0]['value'] = f'/usc/{task_id}/{task_type}.zip'
+        json_data['inputs'][1]['value'] = md5
+        json_data['name'] = task_name
+        # https://stackoverflow.com/a/22567429/10844937
+        r = requests.post(base_url, json=json_data, headers=headers)
+        return r
     else:
         # 目前暂时用这个固定配置, 这个是根据用户选择的配置来的
         if hardware_level == 'middle':
             f = open('./static/sushi/fluent-2019_b1.c1.32.json', encoding='UTF-8')
-            json_data = json.load(f)
-            json_data['inputs'][0]['value'] = f'/usc/{task_id}/{task_type}.zip'
-            json_data['inputs'][1]['value'] = solver
-            json_data['inputs'][2]['value'] = parallel_number
-            json_data['inputs'][3]['value'] = md5
-            json_data['name'] = task_name
-            r = requests.post(base_url, json=json_data, headers=headers)
-            return r
+        elif hardware_level == 'low':
+            f = open('./static/sushi/fluent-2019_b1.c1.24.json', encoding='UTF-8')
+        else:
+            f = open('./static/sushi/fluent-2019_b1.c1.48.json', encoding='UTF-8')
+        json_data = json.load(f)
+        json_data['inputs'][0]['value'] = f'/usc/{task_id}/{task_type}.zip'
+        json_data['inputs'][1]['value'] = solver
+        json_data['inputs'][2]['value'] = parallel_number
+        json_data['inputs'][3]['value'] = md5
+        json_data['name'] = task_name
+        r = requests.post(base_url, json=json_data, headers=headers)
+        return r
 
 
 def reverse_job(job_id):
