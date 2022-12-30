@@ -67,7 +67,7 @@ async def monitor_task(task_id, celery_task_id):
         # 对任务状态进行轮询
         icem_finish = False
         while not icem_finish:
-            res = reverse_job(job_id)
+            res = reverse_job(job_id, headers)
             state = res['state']
             api_log.info(state)
             if state == 'COMPLETE':
@@ -118,7 +118,7 @@ async def monitor_task(task_id, celery_task_id):
                 # (8) 对任务状态进行轮询
                 fluent_finish = False
                 while not fluent_finish:
-                    res = reverse_job(job_id)
+                    res = reverse_job(job_id, headers)
                     state = res['state']
                     print(state)
                     if state == 'COMPLETE':

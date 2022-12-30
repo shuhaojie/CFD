@@ -434,9 +434,7 @@ def create_job(task_id, task_type, md5, headers, hardware_level='middle', solver
         return r
 
 
-def reverse_job(job_id):
-    token = get_token()
-    headers = {'Authorization': f'Bearer {token}'}
+def reverse_job(job_id, headers):
     base_url = f'http://120.48.150.243/api/v1/jobs/{job_id}'
     r = requests.get(base_url, headers=headers)
     return r.json()
