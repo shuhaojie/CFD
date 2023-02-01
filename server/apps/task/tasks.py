@@ -6,6 +6,8 @@ import os
 import time
 import uuid
 import shutil
+import zipfile
+import tempfile
 from tortoise import Tortoise
 from dateutil.parser import parse
 from datetime import datetime, timedelta
@@ -27,23 +29,36 @@ async def monitor_task(task_id, celery_task_id):
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
     api_log.info(f'================Task {task_id} starts===================')
-    stl_file_path = os.path.join(monitor_path, task_id + '.stl')
+    zip_file_path = os.path.join(monitor_path, task_id + '.zip')
     minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}'
     try:
         uknow_query = await Uknow.filter(task_id=task_id).first()
+
         # 等待文件写入稳定
-        FileTool.write_complete(stl_file_path)
+        FileTool.write_complete(zip_file_path)
+
         # 新建Icem文件夹
         icem_dst_path = os.path.join(prepare_path, task_id, 'icem')
         FileTool.make_directory(icem_dst_path)
-        # 将数据移动到prepare路径下, 并重命名, task_id.stl -> vessel.stl
-        shutil.move(stl_file_path, os.path.join(icem_dst_path, 'vessel.stl'))
-        shutil.copy('./static/bash/mesh_auto.tcl', icem_dst_path)
+
+        # 将软件传过来的zip包进行解压
+        zf = zipfile.ZipFile(zip_file_path)
+        with tempfile.TemporaryDirectory() as tempdir:
+            zf.extractall(tempdir)
+
+        # 将vessel.stl数据移动到prepare/icem路径下
+        shutil.move(os.path.join(tempdir, 'vessel.stl'), icem_dst_path)
+        # 将mesh_auto.usf数据移动到prepare/icem路径下
+        shutil.move(os.path.join(tempdir, 'mesh_auto.usf'), icem_dst_path)
+
         # 压缩Icem文件夹
         icem_zip_file = f'{icem_dst_path}.zip'
         FileTool.make_zipfile(icem_zip_file, icem_dst_path)
-        # 计算Icem zip包的md5值
+
+        # 计算Icem zip包的md5值, 创建任务的时候需要交给速石做文件完整性校验
         icem_hash = FileTool.get_md5(icem_zip_file)
+
+        # IcemTask表新增一条记录, 这个表的数据一旦任务完成, 需要及时删除
         str_uuid = str(uuid.uuid1())
         await IcemTask.create(
             task_id=task_id,
@@ -51,28 +66,39 @@ async def monitor_task(task_id, celery_task_id):
             uuid=str_uuid,
             task_status=Status.PENDING,
         )
+
         # 获取token
         token = await get_token()
         headers = {'Authorization': f'Bearer {token}'}
+
         # 等待icem zip文件写入稳定
         FileTool.write_complete(icem_zip_file)
+
         # 在速石上新建以task_id为名称的文件夹
         create_remote_folder(task_id, headers)
+
         # 上传Icem数据
         upload_file(task_id, 'icem', headers)
-        # 再发申请硬件资源的请求
+
+        # 发送申请硬件资源的请求并拿到速石返回的job_id
         r = create_job(task_id, 'icem', icem_hash, headers, uknow_query.icem_hardware_level)
         job_id = r.json()['id']
+
+        # 更新IcemTask
         await IcemTask.filter(task_id=task_id).update(job_id=job_id)
+
         # 对任务状态进行轮询
         icem_finish = False
         while not icem_finish:
+            # 获取任务状态
             res = reverse_job(job_id, headers)
             state = res['state']
             api_log.info(state)
             if state == 'COMPLETE':
                 api_log.info('Icem finish!!!!')
+                # 一旦任务完成, 及时删除记录
                 await IcemTask.filter(task_id=task_id).delete()
+                # 采用速石传回来的 任务开始/任务结束 时间, 方便后续计算费用
                 icem_start, icem_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                     res['finishedAt']) + timedelta(hours=8)
                 await Uknow.filter(task_id=task_id).update(
@@ -84,29 +110,30 @@ async def monitor_task(task_id, celery_task_id):
                 url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
                 fluent_dst_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
                 FileTool.make_directory(fluent_dst_path)
+                # 下载fluent.msh文件
                 download_file(url, fluent_dst_path, headers)
-                # (2) 等待文件下载完全下载下来
+                # 等待文件下载完全下载下来
                 fluent_msh_file = os.path.join(fluent_dst_path, 'fluent.msh')
                 download_complete(fluent_msh_file)
-                # (3) 将prof文件复制到文件夹中, 具体要根据用户的选择
+                # 将prof文件复制到文件夹中, 具体要根据用户的选择
                 fluent_prof_query = await FluentProf.filter(prof_name=uknow_query.fluent_prof).first()
                 prof_path = fluent_prof_query.prof_path
-                # 移动prof文件并重命名
+                # 移动prof文件并重命名, 这里统一重命名为ICA(因为脚本中是ICA)
                 shutil.copy(f'./static/prof/{prof_path}',
                             os.path.join(fluent_dst_path, 'ICA_from_ICA_fourier_mass.prof'))
-                # (4) 将jou文件复制到路径下
-                shutil.copy('./static/bash/cfd_auto.jou', fluent_dst_path)
-                # (4) 将fluent文件夹进行打包
+                # 将jou文件复制到路径下
+                shutil.move(os.path.join(tempdir, 'mesh_cfd.usf'), icem_dst_path)
+                # 将fluent文件夹进行打包
                 output_filename = f'{fluent_dst_path}.zip'
                 FileTool.make_zipfile(output_filename, fluent_dst_path)
 
-                # (5) 计算fluent的md5
+                # 计算fluent的md5
                 fluent_md5 = FileTool.get_md5(output_filename)
                 str_uuid = str(uuid.uuid1())
                 await FluentTask.create(uuid=str_uuid, task_id=task_id, fluent_md5=fluent_md5)
-                # (6) 上传文件到速石
+                # 上传文件到速石
                 upload_file(task_id, 'fluent', headers)
-                # (7) 创建fluent任务
+                # 创建fluent任务
                 r = create_job(task_id, 'fluent', fluent_md5, headers, uknow_query.fluent_hardware_level)
                 job_id = r.json()['id']
                 await FluentTask.filter(task_id=task_id).update(job_id=job_id)
@@ -115,7 +142,7 @@ async def monitor_task(task_id, celery_task_id):
                     fluent_status=Status.PENDING,
                     fluent_start=fluent_start
                 )
-                # (8) 对任务状态进行轮询
+                # 对任务状态进行轮询
                 fluent_finish = False
                 while not fluent_finish:
                     res = reverse_job(job_id, headers)
@@ -125,12 +152,12 @@ async def monitor_task(task_id, celery_task_id):
                         url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result/ensight_result.encas'
                         file_path = os.path.join(configs.PREPARE_PATH, task_id)
                         download_file(url, file_path, headers)
-                        # (9) 等待文件下载完全下载下来
+                        # 等待文件下载完全下载下来
                         fluent_result_zip = os.path.join(file_path, 'ensight_result.encas')
                         download_complete(fluent_result_zip)
-                        # (10) 将文件结果上传到minio
+                        # 将文件结果上传到minio
                         minio.upload_file(f'{task_id}/ensight_result.encas', fluent_result_zip)
-                        # (11) 更新Uknow, FluentTask表
+                        # 更新Uknow, FluentTask表
                         fluent_start, fluent_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                             res['finishedAt']) + timedelta(hours=8)
                         widget = await task_widget(task_id)
@@ -142,12 +169,12 @@ async def monitor_task(task_id, celery_task_id):
                             fluent_result_file_path=f'{minio_base_url}/ensight_result.encas',
                             widgets=widget,
                         )
-                        # (12) 将文件夹移动到archive下进行归档
+                        # 将文件夹移动到archive下进行归档
                         archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
                         if os.path.isdir(archive_path):
                             shutil.rmtree(archive_path)
                         shutil.move(file_path, configs.ARCHIVE_PATH)
-                        # (13) 从FluentTask中及时删除掉
+                        # 从FluentTask中及时删除掉
                         await FluentTask.filter(task_id=task_id).delete()
                         icem_finish = True
                         fluent_finish = True
@@ -192,6 +219,7 @@ async def monitor_task(task_id, celery_task_id):
                 # 结束循环
                 icem_finish = True
             else:
+                # 如果任务既没有成功, 也没有失败, 那么就休眠5秒后再轮询
                 time.sleep(5)
 
     except Exception as e:

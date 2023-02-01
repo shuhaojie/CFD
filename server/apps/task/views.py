@@ -47,9 +47,9 @@ async def upload(file: UploadFile,
     file_md5 = FileTool.get_md5(write_path)
     if file_md5 != md5:
         return {'code': 200, "message": "md5校验未通过, 请检查数据", "task_id": None, "status": False}
-    # 3. 检查文件是否是stl文件
-    elif not file.filename.endswith('stl'):
-        return {'code': 200, "message": "请上传stl文件", "task_id": None, "status": False}
+    # 3. 检查文件是否是zip文件
+    elif not file.filename.endswith('zip'):
+        return {'code': 200, "message": "请上传zip文件", "task_id": None, "status": False}
     else:
         # 4. 生成task_id
         now_time = datetime.datetime.now()
@@ -82,7 +82,7 @@ async def upload(file: UploadFile,
             data_statue=Status.SUCCESS
         )
         # 6. 对文件重命名
-        standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.stl')
+        standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
         total_tasks = await IcemTask.filter(task_status=Status.PENDING).all()
@@ -93,13 +93,15 @@ async def upload(file: UploadFile,
                 icem_start=datetime.datetime.now(),
                 create_time=datetime.datetime.now(),
             )
+            return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
         else:
             # 如果任务数过多, 需要排队
             max_queue = await Uknow.all().annotate(data=Max('task_queue')).values('data')
             await Uknow.filter(task_id=task_id).update(
                 task_queue=max_queue[0]['data'] + 1,
             )
-        return {'code': 200, "message": "文件上传成功", 'task_id': task_id, 'status': True}
+            return {'code': 200, "message": f"文件上传成功, 任务排队中, 排队号:{max_queue[0]['data'] + 1}",
+                    'task_id': task_id, 'status': True}
 
 
 @uknow_router.get("/get_status", name="状态查询")
