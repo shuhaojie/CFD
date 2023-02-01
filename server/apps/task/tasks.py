@@ -49,9 +49,9 @@ async def monitor_task(task_id, celery_task_id):
         #     zf.extractall(tempdir)
 
         # 将vessel.stl数据移动到prepare/icem路径下
-        shutil.move(os.path.join(zip_to, 'data', 'vessel.stl'), icem_dst_path)
+        shutil.move(os.path.join(zip_to, 'vessel.stl'), icem_dst_path)
         # 将mesh_auto.usf数据移动到prepare/icem路径下
-        shutil.move(os.path.join(zip_to, 'data', 'mesh_auto.usf'), icem_dst_path)
+        shutil.move(os.path.join(zip_to, 'mesh_auto.usf'), icem_dst_path)
 
         # 压缩Icem文件夹
         icem_zip_file = f'{icem_dst_path}.zip'
@@ -124,7 +124,7 @@ async def monitor_task(task_id, celery_task_id):
                 shutil.copy(f'./static/prof/{prof_path}',
                             os.path.join(fluent_dst_path, 'ICA_from_ICA_fourier_mass.prof'))
                 # 将jou文件复制到路径下
-                shutil.move(os.path.join(zip_to, 'data', 'mesh_cfd.usf'), icem_dst_path)
+                shutil.move(os.path.join(zip_to, 'mesh_cfd.usf'), icem_dst_path)
                 # 将fluent文件夹进行打包
                 output_filename = f'{fluent_dst_path}.zip'
                 FileTool.make_zipfile(output_filename, fluent_dst_path)
