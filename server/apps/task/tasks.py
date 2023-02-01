@@ -42,14 +42,16 @@ async def monitor_task(task_id, celery_task_id):
         FileTool.make_directory(icem_dst_path)
 
         # 将软件传过来的zip包进行解压
-        zf = zipfile.ZipFile(zip_file_path)
-        with tempfile.TemporaryDirectory() as tempdir:
-            zf.extractall(tempdir)
+        zip_to = os.path.join(monitor_path, task_id)
+        FileTool.unzip_file(zip_file_path, zip_to)
+        # zf = zipfile.ZipFile(zip_file_path)
+        # with tempfile.TemporaryDirectory() as tempdir:
+        #     zf.extractall(tempdir)
 
         # 将vessel.stl数据移动到prepare/icem路径下
-        shutil.move(os.path.join(tempdir, 'vessel.stl'), icem_dst_path)
+        shutil.move(os.path.join(zip_to, 'data', 'vessel.stl'), icem_dst_path)
         # 将mesh_auto.usf数据移动到prepare/icem路径下
-        shutil.move(os.path.join(tempdir, 'mesh_auto.usf'), icem_dst_path)
+        shutil.move(os.path.join(zip_to, 'data', 'mesh_auto.usf'), icem_dst_path)
 
         # 压缩Icem文件夹
         icem_zip_file = f'{icem_dst_path}.zip'
@@ -122,7 +124,7 @@ async def monitor_task(task_id, celery_task_id):
                 shutil.copy(f'./static/prof/{prof_path}',
                             os.path.join(fluent_dst_path, 'ICA_from_ICA_fourier_mass.prof'))
                 # 将jou文件复制到路径下
-                shutil.move(os.path.join(tempdir, 'mesh_cfd.usf'), icem_dst_path)
+                shutil.move(os.path.join(zip_to, 'data', 'mesh_cfd.usf'), icem_dst_path)
                 # 将fluent文件夹进行打包
                 output_filename = f'{fluent_dst_path}.zip'
                 FileTool.make_zipfile(output_filename, fluent_dst_path)
