@@ -100,6 +100,8 @@ async def upload(file: UploadFile,
             await Uknow.filter(task_id=task_id).update(
                 task_queue=max_queue[0]['data'] + 1,
             )
+            # 即使任务数过多, publisher也需要将发布任务
+            run_task.apply_async((task_id,))
             return {'code': 200, "message": f"文件上传成功, 任务排队中, 排队号:{max_queue[0]['data'] + 1}",
                     'task_id': task_id, 'status': True}
 
