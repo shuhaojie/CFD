@@ -176,7 +176,7 @@ async def monitor_task(task_id, celery_task_id):
                         if os.path.isdir(archive_path):
                             shutil.rmtree(archive_path)
                         shutil.move(file_path, configs.ARCHIVE_PATH)
-                        # 从FluentTask中及时删除掉
+                        # 任务完成需要从FluentTask中及时删除掉
                         await FluentTask.filter(task_id=task_id).delete()
                         icem_finish = True
                         fluent_finish = True
