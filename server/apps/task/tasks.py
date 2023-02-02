@@ -124,7 +124,7 @@ async def monitor_task(task_id, celery_task_id):
                 shutil.copy(f'./static/prof/{prof_path}',
                             os.path.join(fluent_dst_path, 'ICA_from_ICA_fourier_mass.prof'))
                 # 将jou文件复制到路径下
-                shutil.move(os.path.join(zip_to, 'cfd_auto.usf'), icem_dst_path)
+                shutil.move(os.path.join(zip_to, 'cfd_auto.usf'), fluent_dst_path)
                 # 将fluent文件夹进行打包
                 output_filename = f'{fluent_dst_path}.zip'
                 FileTool.make_zipfile(output_filename, fluent_dst_path)
