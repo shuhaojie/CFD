@@ -189,7 +189,7 @@ async def monitor_task(task_id, celery_task_id):
                             fluent_end=fluent_end,
                             fluent_log_file_path=f'{minio_base_url}/stderr.txt',
                         )
-                        widget = await task_widget(task_id)
+                        widget = await task_widget(task_id, task_status='FAIL')
                         await Uknow.filter(task_id=task_id).update(widgets=widget)
                         await FluentTask.filter(task_id=task_id).delete()
                         await Archive.create(
@@ -210,7 +210,7 @@ async def monitor_task(task_id, celery_task_id):
                     icem_end=icem_end,
                     icem_log_file_path=f'{minio_base_url}/stderr.txt',
                 )
-                widget = await task_widget(task_id)
+                widget = await task_widget(task_id, task_status='FAIL')
                 await Uknow.filter(task_id=task_id).update(widgets=widget)
                 await IcemTask.filter(task_id=task_id).delete()
                 await Archive.create(

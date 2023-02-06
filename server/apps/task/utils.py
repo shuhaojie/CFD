@@ -440,7 +440,7 @@ def reverse_job(job_id, headers):
     return r.json()
 
 
-async def task_widget(task_id):
+async def task_widget(task_id, task_status='SUCCESS'):
     query = await Uknow.filter(task_id=task_id).first()
     icem_start, icem_end, icem_level = query.icem_start, query.icem_end, query.icem_hardware_level
     fluent_start, fluent_end, fluent_level = query.fluent_start, query.fluent_end, query.fluent_hardware_level
@@ -452,14 +452,18 @@ async def task_widget(task_id):
     icem_query = await IcemHardware.filter(level=icem_level).first()
     fluent_query = await FluentHardware.filter(level=fluent_level).first()
     icem_price, fluent_price = icem_query.price, fluent_query.price
-    # 计算价格: 时间*价格
-    compute_price = icem_price * icem_duration / 3600.0 + fluent_price * fluent_duration / 3600.0
     # 存储价格: 时间换算成小时, 乘以单价0.508, 再乘以150G, 除以每个月720个小时
     storage_price = ((icem_duration + fluent_duration) / 3600.0) * 0.508 * 150 / 720
-    file_size = os.path.getsize(os.path.join(configs.PREPARE_PATH, task_id, 'ensight_result.encas'))
-    # 下载价格: 每GB收费0.8246
-    download_price = file_size * 0.8246 / (1024.0 * 1024.0 * 1024.0)
-    return round(compute_price + storage_price + download_price, 2)
+    # 计算价格: 时间*价格
+    compute_price = icem_price * icem_duration / 3600.0 + fluent_price * fluent_duration / 3600.0
+    # 任务成功, 才需要计算下载价格
+    if task_status == 'SUCCESS':
+        file_size = os.path.getsize(os.path.join(configs.PREPARE_PATH, task_id, 'ensight_result.encas'))
+        # 下载价格: 每GB收费0.8246
+        download_price = file_size * 0.8246 / (1024.0 * 1024.0 * 1024.0)
+        return round(compute_price + storage_price + download_price, 2)
+    else:
+        return round(compute_price + storage_price, 2)
 
 
 def task_fail(task_id, job_id, headers):
