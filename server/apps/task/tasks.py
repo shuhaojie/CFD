@@ -162,13 +162,16 @@ async def monitor_task(task_id, celery_task_id):
                         # 更新Uknow, FluentTask表
                         fluent_start, fluent_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                             res['finishedAt']) + timedelta(hours=8)
-                        widget = await task_widget(task_id)
+                        # 先更新一下数据, 不然计算费用的时候查不出
                         await Uknow.filter(task_id=task_id).update(
                             fluent_status=Status.SUCCESS,
                             fluent_start=fluent_start,
                             fluent_end=fluent_end,
                             fluent_duration=float((fluent_end - fluent_start).seconds),
                             fluent_result_file_path=f'{minio_base_url}/ensight_result.encas',
+                        )
+                        widget = await task_widget(task_id)
+                        await Uknow.filter(task_id=task_id).update(
                             widgets=widget,
                         )
                         # 将文件夹移动到archive下进行归档
