@@ -13,6 +13,13 @@ import yaml
 import hashlib
 from glob import glob
 from datetime import datetime, timedelta
+import smtplib
+from pathlib import Path
+from email.mime.base import MIMEBase
+from email import encoders
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import COMMASPACE, formatdate
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, BASE_DIR)
@@ -20,6 +27,7 @@ sys.path.insert(0, BASE_DIR)
 from logs import api_log
 from config import configs
 from utils.oss import Minio
+from utils.constant import BUSINESS
 from apps.models import Token, Uknow, IcemHardware, FluentHardware
 
 minio = Minio()
@@ -481,8 +489,59 @@ def task_fail(task_id, job_id, headers):
     shutil.move(file_path, configs.ARCHIVE_PATH)
 
 
-if __name__ == '__main__':
-    res = reverse_job('181')
-    from dateutil.parser import parse
+async def send_mail(task_id, task_status='SUCCESS'):
+    query = await Uknow.filter(task_id=task_id).first()
+    order_id = query.order_id
+    # send_to = get_email_by_order_id(order_id)
+    send_to = 'shuhaojie@unionstrongtech.com'
+    send_from = BUSINESS.EMAIL_FROM
+    if task_status == 'SUCCESS':
+        subject = 'CFD任务成功'
+        message = '附件为encas文件'
+    else:
+        subject = 'CFD任务失败'
+        message = '附件为日志文件'
+    file_path = os.path.join(configs.ARCHIVE_PATH, task_id, 'ensight_result.encas')
+    server = BUSINESS.EMAIL_HOST
+    port = BUSINESS.EMAIL_PORT
+    username = BUSINESS.EMAIL_USER
+    password = BUSINESS.EMAIL_PASSWORD
+    use_tls = BUSINESS.EMAIL_USE_SSL
+    msg = MIMEMultipart()
+    msg['From'] = send_from
+    msg['To'] = COMMASPACE.join(send_to)
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = subject
 
-    print(parse(res['finishedAt']))
+    msg.attach(MIMEText(message))
+
+    part = MIMEBase('application', "octet-stream")
+    with open(file_path, 'rb') as file:
+        part.set_payload(file.read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition',
+                    'attachment; filename={}'.format(Path(file_path).name))
+    msg.attach(part)
+
+    smtp = smtplib.SMTP(server, port)
+    if use_tls:
+        smtp.starttls()
+    smtp.login(username, password)
+    smtp.sendmail(send_from, send_to, msg.as_string())
+    smtp.quit()
+
+
+def get_email_by_order_id(order_id):
+    if configs.ENVIRONMENT == 'local' or configs.ENVIRONMENT == 'development':
+        base_url = 'http://172.16.1.37:31226'
+    elif configs.ENVIRONMENT == 'production':
+        base_url = 'http://services.unionstrongtech.com'
+    else:
+        base_url = 'http://testservices.unionstrongtech.com'
+    request_url = f'{base_url}/api/v1/station/get_email'
+    r = requests.get(request_url, params={'order_id': order_id})
+    return r.json()
+
+
+if __name__ == '__main__':
+    send_mail('')

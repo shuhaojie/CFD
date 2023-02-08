@@ -17,7 +17,7 @@ from apps.models import Uknow, IcemTask, FluentTask, FluentProf, Archive
 from dbs.database import TORTOISE_ORM
 from utils.constant import Status
 from apps.task.utils import FileTool, get_token, download_file, upload_file, create_job, create_remote_folder, \
-    reverse_job, download_complete, task_fail, task_widget
+    reverse_job, download_complete, task_fail, task_widget, send_mail
 from logs import api_log
 from utils.oss import Minio
 
@@ -176,6 +176,8 @@ async def monitor_task(task_id, celery_task_id):
                         if os.path.isdir(archive_path):
                             shutil.rmtree(archive_path)
                         shutil.move(file_path, configs.ARCHIVE_PATH)
+                        # 发送邮件
+                        await send_mail(task_id)
                         # 任务完成需要从FluentTask中及时删除掉
                         await FluentTask.filter(task_id=task_id).delete()
                         icem_finish = True
