@@ -14,6 +14,7 @@ class Uknow(AbstractBaseModel):
     username = fields.CharField(description="用户名", max_length=MyConstant.MAX_LENGTH, null=True)
     mac_address = fields.CharField(description="MAC地址", max_length=MyConstant.MAX_LENGTH)
     md5 = fields.CharField(description="文件md5值", max_length=MyConstant.MAX_LENGTH)
+    order_id = fields.CharField(description="订单id", max_length=MyConstant.MAX_LENGTH)
 
     # 跑Icem任务的硬件配置
     icem_hardware_level = fields.CharField(description="Icem硬件配置等级", max_length=MyConstant.MAX_LENGTH)

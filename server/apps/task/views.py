@@ -25,6 +25,7 @@ uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 async def upload(file: UploadFile,
                  md5: str,
                  mac_address: str,
+                 order_id: str,
                  prof: Literal['ICA', 'ACA', 'BA', 'MCA', 'VA'],
                  icem_hardware_level: Literal['low', 'medium', 'high'],
                  fluent_hardware_level: Literal['low', 'medium', 'high'],
@@ -79,7 +80,8 @@ async def upload(file: UploadFile,
             icem_hardware_level=icem_hardware_level,
             fluent_hardware_level=fluent_hardware_level,
             fluent_prof=prof,
-            data_statue=Status.SUCCESS
+            data_statue=Status.SUCCESS,
+            order_id=order_id,
         )
         # 6. 对文件重命名
         standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')

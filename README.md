@@ -25,6 +25,19 @@ aerich init-db
 aerich upgrade
 ```
 
+修改数据
+```bash
+cd server
+aerich migrate --name drop_column
+aerich upgrade
+```
+
+v1.1.0更新
+
+```sql
+ALTER TABLE `uknow` ADD `order_id` VARCHAR(255) NOT NULL  COMMENT '订单id';
+```
+
 ### 4. 入库`FluentProf`和`Admin`表
 
 ```bash
