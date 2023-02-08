@@ -97,10 +97,10 @@ class BUSINESS(object):
     GET_ASSUME_ROLE_FIELD = 5107  # 获取用户临时秘钥失败
     CDN_API_CALL_FIELD = 5107  # API调用失败
 
-    EMAIL_USER = 'upixel@unionstrongtech.com'
-    EMAIL_PASSWORD = 'upixel@unionstrong@2022'
+    EMAIL_USER = 'cfd@unionstrongtech.com'
+    EMAIL_PASSWORD = 'CF@unionstrong@2023'
     EMAIL_HOST = 'smtp.qiye.aliyun.com'
-    EMAIL_FROM = 'upixel@unionstrongtech.com'
+    EMAIL_FROM = 'cfd@unionstrongtech.com'
     EMAIL_PORT = 25
     EMAIL_USE_SSL = True
 
