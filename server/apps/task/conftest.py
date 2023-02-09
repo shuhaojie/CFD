@@ -51,10 +51,10 @@ def send_mail(task_status='SUCCESS'):
                     'attachment; filename={}'.format(Path(file_path).name))
     msg.attach(part)
 
-    smtp = smtplib.SMTP_SSL(server)
+    smtp = smtplib.SMTP(server, port)
     if use_tls:
-        smtp.ehlo()
         smtp.starttls()
+        smtp.ehlo()
     smtp.login(username, password)
     smtp.sendmail(send_from, send_to, msg.as_string())
     smtp.quit()
