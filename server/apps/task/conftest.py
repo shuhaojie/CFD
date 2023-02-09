@@ -53,6 +53,7 @@ def send_mail(task_status='SUCCESS'):
 
     smtp = smtplib.SMTP_SSL(server)
     if use_tls:
+        smtp.ehlo()
         smtp.starttls()
     smtp.login(username, password)
     smtp.sendmail(send_from, send_to, msg.as_string())
