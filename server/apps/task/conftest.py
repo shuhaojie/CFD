@@ -17,7 +17,7 @@ from utils.constant import BUSINESS
 def send_mail(task_status='SUCCESS'):
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = "shuhaojie@unionstrongtech.com, songyouli@unionstrongtech.com"
+    you = "shuhaojie@unionstrongtech.com,songyouli@unionstrongtech.com"
 
     if task_status == 'SUCCESS':
         subject = 'CFD任务测试'
