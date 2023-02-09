@@ -34,7 +34,7 @@ def send_mail(task_status='SUCCESS'):
     username = BUSINESS.EMAIL_USER
     password = BUSINESS.EMAIL_PASSWORD
     use_tls = BUSINESS.EMAIL_USE_SSL
-    print(server, port, username, password, use_tls)
+    # print(server, port, username, password, use_tls)
     msg = MIMEMultipart()
     msg['From'] = send_from
     msg['To'] = COMMASPACE.join(send_to)
@@ -51,10 +51,8 @@ def send_mail(task_status='SUCCESS'):
                     'attachment; filename={}'.format(Path(file_path).name))
     msg.attach(part)
 
-    smtp = smtplib.SMTP(server, port)
-    # if use_tls:
-    #     smtp.starttls()
-    #     smtp.ehlo()
+    smtp = smtplib.SMTP_SSL()
+    smtp.connect(server, port)
     smtp.login(username, password)
     smtp.sendmail(send_from, send_to, msg.as_string())
     smtp.quit()
