@@ -17,7 +17,7 @@ from utils.constant import BUSINESS
 def send_mail(task_status='SUCCESS'):
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = ["shuhaojie@unionstrongtech.com", "songyouli@unionstrongtech.com"]
+    you = 'shuhaojie@unionstrongtech.com,songyouli@unionstrongtech.com'
 
     if task_status == 'SUCCESS':
         subject = 'CFD任务测试!!!'
@@ -29,7 +29,7 @@ def send_mail(task_status='SUCCESS'):
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
     msg['From'] = me
-    msg['To'] = COMMASPACE.join(you)
+    msg['To'] = ', '.join(you.split(','))
     msg.attach(MIMEText(message))
 
     file_path = '/workspaces/data/archive/20230208172439001/ensight_result.encas'
