@@ -17,11 +17,11 @@ from utils.constant import BUSINESS
 def send_mail(task_status='SUCCESS'):
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = 'shuhaojie@unionstrongtech.com,songyouli@unionstrongtech.com'
+    you = 'shuhaojie@unionstrongtech.com,huangwuying@unionstrongtech.com'
 
     if task_status == 'SUCCESS':
-        subject = 'CFD任务测试!!!'
-        message = '附件为encas文件!!!'
+        subject = '再次测试'
+        message = '附件为encas文件!!'
     else:
         subject = 'CFD任务测试!!!'
         message = '附件为日志文件!!!'
@@ -29,10 +29,10 @@ def send_mail(task_status='SUCCESS'):
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
     msg['From'] = me
-    msg['To'] = ', '.join(you.split(','))
+    msg['To'] = you
     msg.attach(MIMEText(message))
 
-    file_path = '/workspaces/data/archive/20230208172439001/ensight_result.encas'
+    file_path = r'C:\workspaces\CFD\data\ensight_result.encas'
     part = MIMEBase('application', "octet-stream")
     with open(file_path, 'rb') as file:
         part.set_payload(file.read())
@@ -44,7 +44,7 @@ def send_mail(task_status='SUCCESS'):
     s = smtplib.SMTP_SSL(BUSINESS.EMAIL_HOST)
     s.login(me, my_password)
 
-    s.sendmail(me, msg["To"].split(","), msg.as_string())
+    s.send_message(msg)
     s.quit()
 
 

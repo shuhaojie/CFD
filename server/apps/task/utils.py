@@ -496,7 +496,7 @@ async def send_mail(task_id, task_status='SUCCESS'):
 
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = ["liuyongjian@unionstrongtech.com", "shuhaojie@unionstrongtech.com"]
+    you = 'shuhaojie@unionstrongtech.com,liuyongjian@unionstrongtech.com'
 
     # 任务耗时
     if query.fluent_end:
@@ -538,7 +538,7 @@ async def send_mail(task_id, task_status='SUCCESS'):
     s = smtplib.SMTP_SSL(BUSINESS.EMAIL_HOST)
     s.login(me, my_password)
 
-    s.sendmail(me, you, msg.as_string())
+    s.send_message(msg)
     s.quit()
 
 
