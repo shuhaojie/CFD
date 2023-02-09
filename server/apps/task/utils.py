@@ -496,8 +496,7 @@ async def send_mail(task_id, task_status='SUCCESS'):
 
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = ["liuyongjian@unionstrongtech.com",
-           "shuhaojie@unionstrongtech.com"]
+    you = "liuyongjian@unionstrongtech.com, shuhaojie@unionstrongtech.com"
 
     # 任务耗时
     if query.fluent_end:
@@ -524,7 +523,7 @@ async def send_mail(task_id, task_status='SUCCESS'):
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
     msg['From'] = me
-    msg['To'] = COMMASPACE.join(you)
+    msg['To'] = you
     msg.attach(MIMEText(message))
 
     file_path = os.path.join(configs.ARCHIVE_PATH, task_id, 'ensight_result.encas')
@@ -539,7 +538,7 @@ async def send_mail(task_id, task_status='SUCCESS'):
     s = smtplib.SMTP_SSL(BUSINESS.EMAIL_HOST)
     s.login(me, my_password)
 
-    s.sendmail(me, you, msg.as_string())
+    s.sendmail(me, you.split(','), msg.as_string())
     s.quit()
 
 
