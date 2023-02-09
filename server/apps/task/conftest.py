@@ -30,11 +30,11 @@ def send_mail(task_status='SUCCESS'):
     # file_path = r'C:\workspaces\CFD\data\ensight_result.encas'
     file_path = '/workspaces/data/archive/20230208172439001/ensight_result.encas'
     server = BUSINESS.EMAIL_HOST
-    print(server)
     port = BUSINESS.EMAIL_PORT
     username = BUSINESS.EMAIL_USER
     password = BUSINESS.EMAIL_PASSWORD
     use_tls = BUSINESS.EMAIL_USE_SSL
+    print(server, port, username, password, use_tls)
     msg = MIMEMultipart()
     msg['From'] = send_from
     msg['To'] = COMMASPACE.join(send_to)
@@ -51,7 +51,7 @@ def send_mail(task_status='SUCCESS'):
                     'attachment; filename={}'.format(Path(file_path).name))
     msg.attach(part)
 
-    smtp = smtplib.SMTP(server, port)
+    smtp = smtplib.SMTP(server)
     if use_tls:
         smtp.starttls()
     smtp.login(username, password)
