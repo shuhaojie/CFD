@@ -52,9 +52,9 @@ def send_mail(task_status='SUCCESS'):
     msg.attach(part)
 
     smtp = smtplib.SMTP(server, port)
-    if use_tls:
-        smtp.starttls()
-        smtp.ehlo()
+    # if use_tls:
+    #     smtp.starttls()
+    #     smtp.ehlo()
     smtp.login(username, password)
     smtp.sendmail(send_from, send_to, msg.as_string())
     smtp.quit()
