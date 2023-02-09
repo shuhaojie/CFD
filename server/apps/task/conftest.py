@@ -58,25 +58,38 @@ def send_mail(task_status='SUCCESS'):
     smtp.quit()
 
 
-def new_send_email():
-    # skipped your comments for readability
-    import smtplib
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
+def send_email(task_status='SUCCESS'):
 
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
     you = "shuhaojie@unionstrongtech.com"
 
+    if task_status == 'SUCCESS':
+        subject = 'CFD任务成功'
+        message = '附件为encas文件'
+    else:
+        subject = 'CFD任务失败'
+        message = '附件为日志文件'
+
     msg = MIMEMultipart('alternative')
-    msg['Subject'] = "Alert"
+    msg['Subject'] = subject
     msg['From'] = me
     msg['To'] = you
+    msg.attach(MIMEText(message))
 
-    html = '<html><body><p>Hi, I have the following alerts for you!</p></body></html>'
-    part2 = MIMEText(html, 'html')
+    file_path = '/workspaces/data/archive/20230208172439001/ensight_result.encas'
+    part = MIMEBase('application', "octet-stream")
+    with open(file_path, 'rb') as file:
+        part.set_payload(file.read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition',
+                    'attachment; filename={}'.format(Path(file_path).name))
+    msg.attach(part)
 
-    msg.attach(part2)
+    # html = '<html><body><p>Hi, I have the following alerts for you!</p></body></html>'
+    # part2 = MIMEText(html, 'html')
+
+    # msg.attach(part2)
 
     # Send the message via gmail's regular server, over SSL - passwords are being sent, afterall
     s = smtplib.SMTP_SSL(BUSINESS.EMAIL_HOST)
@@ -89,4 +102,4 @@ def new_send_email():
     s.quit()
 
 
-new_send_email()
+send_email()
