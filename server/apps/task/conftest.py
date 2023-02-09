@@ -14,7 +14,7 @@ sys.path.insert(0, BASE_DIR)
 from utils.constant import BUSINESS
 
 
-def send_mail(task_status='SUCCESS'):
+def x_send_mail(task_status='SUCCESS'):
     # query = await Uknow.filter(task_id=task_id).first()
     # order_id = query.order_id
     # send_to = get_email_by_order_id(order_id)
