@@ -27,6 +27,7 @@ def send_mail(task_status='SUCCESS'):
     else:
         subject = 'CFD任务失败'
         message = '附件为日志文件'
+    # file_path = r'C:\workspaces\CFD\data\ensight_result.encas'
     file_path = '/workspaces/data/archive/20230208172439001/ensight_result.encas'
     server = BUSINESS.EMAIL_HOST
     print(server)

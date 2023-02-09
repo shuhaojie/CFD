@@ -101,7 +101,7 @@ class BUSINESS(object):
     EMAIL_PASSWORD = 'CF@unionstrong@2023'
     EMAIL_HOST = 'smtp.qiye.aliyun.com'
     EMAIL_FROM = 'cfd@unionstrongtech.com'
-    EMAIL_PORT = 25
+    EMAIL_PORT = 465
     EMAIL_USE_SSL = True
 
 
