@@ -7,17 +7,17 @@ from email import encoders
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, BASE_DIR)
 
 from utils.constant import BUSINESS
 
 
-def send_email(task_status='SUCCESS'):
-
+def send_mail(task_status='SUCCESS'):
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = "shuhaojie@unionstrongtech.com"
+    you = ["shuhaojie@unionstrongtech.com", "songyouli@unionstrong.com"]
 
     if task_status == 'SUCCESS':
         subject = 'CFD任务成功'
@@ -48,4 +48,4 @@ def send_email(task_status='SUCCESS'):
     s.quit()
 
 
-send_email()
+send_mail()

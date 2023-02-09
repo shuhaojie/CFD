@@ -27,7 +27,7 @@ sys.path.insert(0, BASE_DIR)
 from logs import api_log
 from config import configs
 from utils.oss import Minio
-from utils.constant import BUSINESS
+from utils.constant import BUSINESS, Status
 from apps.models import Token, Uknow, IcemHardware, FluentHardware
 
 minio = Minio()
@@ -489,48 +489,6 @@ def task_fail(task_id, job_id, headers):
     shutil.move(file_path, configs.ARCHIVE_PATH)
 
 
-async def x_send_mail(task_id, task_status='SUCCESS'):
-    query = await Uknow.filter(task_id=task_id).first()
-    order_id = query.order_id
-    # send_to = get_email_by_order_id(order_id)
-    send_to = 'liuyongjian@unionstrongtech.com'
-    send_from = BUSINESS.EMAIL_FROM
-    if task_status == 'SUCCESS':
-        subject = 'CFD任务成功'
-        message = '附件为encas文件'
-    else:
-        subject = 'CFD任务失败'
-        message = '附件为日志文件'
-    file_path = os.path.join(configs.ARCHIVE_PATH, task_id, 'ensight_result.encas')
-    server = BUSINESS.EMAIL_HOST
-    port = BUSINESS.EMAIL_PORT
-    username = BUSINESS.EMAIL_USER
-    password = BUSINESS.EMAIL_PASSWORD
-    use_tls = BUSINESS.EMAIL_USE_SSL
-    msg = MIMEMultipart()
-    msg['From'] = send_from
-    msg['To'] = COMMASPACE.join(send_to)
-    msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = subject
-
-    msg.attach(MIMEText(message))
-
-    part = MIMEBase('application', "octet-stream")
-    with open(file_path, 'rb') as file:
-        part.set_payload(file.read())
-    encoders.encode_base64(part)
-    part.add_header('Content-Disposition',
-                    'attachment; filename={}'.format(Path(file_path).name))
-    msg.attach(part)
-
-    smtp = smtplib.SMTP(server, port)
-    if use_tls:
-        smtp.starttls()
-    smtp.login(username, password)
-    smtp.sendmail(send_from, send_to, msg.as_string())
-    smtp.quit()
-
-
 async def send_mail(task_id, task_status='SUCCESS'):
     query = await Uknow.filter(task_id=task_id).first()
     order_id = query.order_id
@@ -538,14 +496,30 @@ async def send_mail(task_id, task_status='SUCCESS'):
 
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = "liuyongjian@unionstrongtech.com"
+    you = ["liuyongjian@unionstrongtech.com",
+           "shuhaojie@unionstrongtech.com"]
+
+    # 任务耗时
+    if query.fluent_end:
+        total_seconds = (query.fluent_end - query.create_time).total_seconds()
+    else:
+        # 如果Icem任务失败, 需要用Icem的时间
+        if query.icem_status == Status.FAIL:
+            total_seconds = (query.icem_end - query.create_time).total_seconds()
+        else:
+            if query.create_time:
+                total_seconds = ((datetime.now() + timedelta(hours=-8)).replace(
+                    tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
+            else:
+                total_seconds = 0
+    m, s = divmod(total_seconds, 60)
 
     if task_status == 'SUCCESS':
         subject = 'CFD任务成功'
-        message = '附件为encas文件'
+        message = f'任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
     else:
         subject = 'CFD任务失败'
-        message = '附件为日志文件'
+        message = f'任务id:{task_id}'
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
