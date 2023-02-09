@@ -29,7 +29,7 @@ def send_mail(task_status='SUCCESS'):
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
     msg['From'] = me
-    msg['To'] = COMMASPACE.join(you)
+    msg['To'] = ", ".join(you)
     msg.attach(MIMEText(message))
 
     file_path = '/workspaces/data/archive/20230208172439001/ensight_result.encas'
