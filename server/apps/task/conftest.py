@@ -44,7 +44,7 @@ def send_mail(task_status='SUCCESS'):
     s = smtplib.SMTP_SSL(BUSINESS.EMAIL_HOST)
     s.login(me, my_password)
 
-    s.sendmail(me, you, msg.as_string())
+    s.sendmail(me, msg["To"].split(","), msg.as_string())
     s.quit()
 
 
