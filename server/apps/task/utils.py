@@ -489,11 +489,11 @@ def task_fail(task_id, job_id, headers):
     shutil.move(file_path, configs.ARCHIVE_PATH)
 
 
-async def send_mail(task_id, task_status='SUCCESS'):
+async def x_send_mail(task_id, task_status='SUCCESS'):
     query = await Uknow.filter(task_id=task_id).first()
     order_id = query.order_id
     # send_to = get_email_by_order_id(order_id)
-    send_to = 'shuhaojie@unionstrongtech.com'
+    send_to = 'liuyongjian@unionstrongtech.com'
     send_from = BUSINESS.EMAIL_FROM
     if task_status == 'SUCCESS':
         subject = 'CFD任务成功'
@@ -529,6 +529,44 @@ async def send_mail(task_id, task_status='SUCCESS'):
     smtp.login(username, password)
     smtp.sendmail(send_from, send_to, msg.as_string())
     smtp.quit()
+
+
+async def send_email(task_id, task_status='SUCCESS'):
+    query = await Uknow.filter(task_id=task_id).first()
+    order_id = query.order_id
+    # send_to = get_email_by_order_id(order_id)
+
+    me = BUSINESS.EMAIL_FROM
+    my_password = BUSINESS.EMAIL_PASSWORD
+    you = "liuyongjian@unionstrongtech.com"
+
+    if task_status == 'SUCCESS':
+        subject = 'CFD任务成功'
+        message = '附件为encas文件'
+    else:
+        subject = 'CFD任务失败'
+        message = '附件为日志文件'
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = me
+    msg['To'] = COMMASPACE.join(you)
+    msg.attach(MIMEText(message))
+
+    file_path = os.path.join(configs.ARCHIVE_PATH, task_id, 'ensight_result.encas')
+    part = MIMEBase('application', "octet-stream")
+    with open(file_path, 'rb') as file:
+        part.set_payload(file.read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition',
+                    'attachment; filename={}'.format(Path(file_path).name))
+    msg.attach(part)
+
+    s = smtplib.SMTP_SSL(BUSINESS.EMAIL_HOST)
+    s.login(me, my_password)
+
+    s.sendmail(me, you, msg.as_string())
+    s.quit()
 
 
 def get_email_by_order_id(order_id):
