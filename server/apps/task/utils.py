@@ -531,7 +531,7 @@ async def x_send_mail(task_id, task_status='SUCCESS'):
     smtp.quit()
 
 
-async def send_email(task_id, task_status='SUCCESS'):
+async def send_mail(task_id, task_status='SUCCESS'):
     query = await Uknow.filter(task_id=task_id).first()
     order_id = query.order_id
     # send_to = get_email_by_order_id(order_id)
