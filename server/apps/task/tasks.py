@@ -4,16 +4,13 @@
 """
 import os
 import time
-import uuid
 import shutil
-import zipfile
-import tempfile
 from tortoise import Tortoise
 from dateutil.parser import parse
 from datetime import datetime, timedelta
 
 from config import configs
-from apps.models import Uknow, IcemTask, FluentTask, FluentProf, Archive
+from apps.models import Uknow, FluentProf, Archive
 from dbs.database import TORTOISE_ORM
 from utils.constant import Status
 from apps.task.utils import FileTool, get_token, download_file, upload_file, create_job, create_remote_folder, \
@@ -32,6 +29,11 @@ async def monitor_task(task_id, celery_task_id):
     zip_file_path = os.path.join(monitor_path, task_id + '.zip')
     minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}'
     try:
+        # 首先将开始时间做更新
+        await Uknow.filter(task_id=task_id).update(
+            icem_start=datetime.now(),
+            create_time=datetime.now(),
+        )
         uknow_query = await Uknow.filter(task_id=task_id).first()
 
         # 等待文件写入稳定
@@ -44,9 +46,6 @@ async def monitor_task(task_id, celery_task_id):
         # 将软件传过来的zip包进行解压
         zip_to = os.path.join(monitor_path, task_id)
         FileTool.unzip_file(zip_file_path, zip_to)
-        # zf = zipfile.ZipFile(zip_file_path)
-        # with tempfile.TemporaryDirectory() as tempdir:
-        #     zf.extractall(tempdir)
 
         # 将vessel.stl数据移动到prepare/icem路径下
         shutil.move(os.path.join(zip_to, 'vessel.stl'), icem_dst_path)
@@ -59,15 +58,6 @@ async def monitor_task(task_id, celery_task_id):
 
         # 计算Icem zip包的md5值, 创建任务的时候需要交给速石做文件完整性校验
         icem_hash = FileTool.get_md5(icem_zip_file)
-
-        # IcemTask表新增一条记录, 这个表的数据一旦任务完成, 需要及时删除
-        str_uuid = str(uuid.uuid1())
-        await IcemTask.create(
-            task_id=task_id,
-            icem_md5=icem_hash,
-            uuid=str_uuid,
-            task_status=Status.PENDING,
-        )
 
         # 获取token
         token = await get_token()
@@ -86,9 +76,6 @@ async def monitor_task(task_id, celery_task_id):
         r = create_job(task_id, 'icem', icem_hash, headers, uknow_query.icem_hardware_level)
         job_id = r.json()['id']
 
-        # 更新IcemTask
-        await IcemTask.filter(task_id=task_id).update(job_id=job_id)
-
         # 对任务状态进行轮询
         icem_finish = False
         while not icem_finish:
@@ -98,8 +85,6 @@ async def monitor_task(task_id, celery_task_id):
             api_log.info(state)
             if state == 'COMPLETE':
                 api_log.info('Icem finish!!!!')
-                # 一旦任务完成, 及时删除记录
-                await IcemTask.filter(task_id=task_id).delete()
                 # 采用速石传回来的 任务开始/任务结束 时间, 方便后续计算费用
                 icem_start, icem_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                     res['finishedAt']) + timedelta(hours=8)
@@ -131,14 +116,11 @@ async def monitor_task(task_id, celery_task_id):
 
                 # 计算fluent的md5
                 fluent_md5 = FileTool.get_md5(output_filename)
-                str_uuid = str(uuid.uuid1())
-                await FluentTask.create(uuid=str_uuid, task_id=task_id, fluent_md5=fluent_md5)
                 # 上传文件到速石
                 upload_file(task_id, 'fluent', headers)
                 # 创建fluent任务
                 r = create_job(task_id, 'fluent', fluent_md5, headers, uknow_query.fluent_hardware_level)
                 job_id = r.json()['id']
-                await FluentTask.filter(task_id=task_id).update(job_id=job_id)
                 fluent_start = datetime.now()
                 await Uknow.filter(task_id=task_id).update(
                     fluent_status=Status.PENDING,
@@ -181,8 +163,6 @@ async def monitor_task(task_id, celery_task_id):
                         shutil.move(file_path, configs.ARCHIVE_PATH)
                         # 发送邮件
                         await send_mail(task_id)
-                        # 任务完成需要从FluentTask中及时删除掉
-                        await FluentTask.filter(task_id=task_id).delete()
                         icem_finish = True
                         fluent_finish = True
                     elif state == 'FAILED':
@@ -196,12 +176,12 @@ async def monitor_task(task_id, celery_task_id):
                         )
                         widget = await task_widget(task_id, task_status='FAIL')
                         await Uknow.filter(task_id=task_id).update(widgets=widget)
-                        await FluentTask.filter(task_id=task_id).delete()
                         await Archive.create(
                             task_id=task_id,
                             task_type='fluent',
                             task_status=Status.FAIL
                         )
+                        await send_mail(task_id, task_status='FAIL')
                         icem_finish = True
                         fluent_finish = True
                     else:
@@ -217,26 +197,25 @@ async def monitor_task(task_id, celery_task_id):
                 )
                 widget = await task_widget(task_id, task_status='FAIL')
                 await Uknow.filter(task_id=task_id).update(widgets=widget)
-                await IcemTask.filter(task_id=task_id).delete()
                 await Archive.create(
                     task_id=task_id,
                     task_type='icem',
                     task_status=Status.FAIL
                 )
                 # 结束循环
+                await send_mail(task_id, task_status='FAIL')
                 icem_finish = True
             else:
                 # 如果任务既没有成功, 也没有失败, 那么就休眠5秒后再轮询
                 time.sleep(5)
 
     except Exception as e:
-        await IcemTask.filter(task_id=task_id).delete()  # 如果前面某一步除了問題，需要及時將數據記錄刪掉
-        await FluentTask.filter(task_id=task_id).delete()  # 如果前面某一步除了問題，需要及時將數據記錄刪掉
         await Uknow.filter(task_id=task_id).update(
             icem_end=datetime.now(),
             icem_status=Status.FAIL,
             icem_log_file_path='系统错误, 请联系管理员',
         )
+        await send_mail(task_id, task_status='FAIL')
         import traceback
         f = traceback.format_exc()
         print(f)

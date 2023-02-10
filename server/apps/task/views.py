@@ -4,16 +4,16 @@ import shutil
 import pytz
 import datetime
 from fastapi import UploadFile
-from tortoise.functions import Max
 from fastapi_restful.inferring_router import InferringRouter
 from pydantic.typing import Literal
 from typing import List
 from fastapi import Query
 
-from apps.models import Uknow, IcemTask
+from apps.models import Uknow
 from .utils import FileTool
 from .schemas import UploadResponse
 from worker import run_task
+from celery_utils import get_celery_worker
 from config import configs
 from utils.constant import Status
 
@@ -87,7 +87,7 @@ async def upload(file: UploadFile,
         standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
-        total_tasks = await IcemTask.filter(task_status=Status.PENDING).all()
+        total_tasks = get_celery_worker()
         if len(total_tasks) < 10:
             run_task.apply_async((task_id,))
             await Uknow.filter(task_id=task_id).update(
@@ -99,8 +99,10 @@ async def upload(file: UploadFile,
         else:
             # 即使任务数过多, publisher也需要将发布任务
             run_task.apply_async((task_id,))
-            return {'code': 200, "message": "文件上传成功, 任务排队中",
-                    'task_id': task_id, 'status': True}
+            await Uknow.filter(task_id=task_id).update(
+                icem_status=Status.QUEUE,
+            )
+            return {'code': 200, "message": "文件上传成功, 任务排队中", 'task_id': task_id, 'status': True}
 
 
 @uknow_router.get("/get_status", name="状态查询")
