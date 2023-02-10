@@ -3,7 +3,7 @@ import subprocess
 
 
 def get_celery_worker():
-    bash_command = ""
+    bash_command = "celery -A worker inspect active -j"
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     output_string = output.decode("utf-8")
