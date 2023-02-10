@@ -388,8 +388,10 @@ def download_file(url, dest_folder, headers):
                     f.write(chunk)
                     f.flush()
                     os.fsync(f.fileno())
+        return True
     else:  # HTTP status code 4XX/5XX
         print("Download failed: status code {}\n{}".format(r.status_code, r.text))
+        return False
 
 
 def download_complete(file_path):
@@ -478,15 +480,17 @@ def task_fail(task_id, job_id, headers):
     # 取回失败日志
     base_url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/log/stderr.txt'
     file_path = os.path.join(configs.PREPARE_PATH, task_id)
-    download_file(base_url, file_path, headers)
-    log_file_path = os.path.join(file_path, 'stderr.txt')
-    # 日志上传到minio
-    minio.upload_file(f'{task_id}/stderr.txt', log_file_path)
-    # 文件移动到archive下进行归档
-    archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
-    if os.path.isdir(archive_path):
-        shutil.rmtree(archive_path)
-    shutil.move(file_path, configs.ARCHIVE_PATH)
+    is_file_downloaded = download_file(base_url, file_path, headers)
+    # 日志文件可能下载失败
+    if is_file_downloaded:
+        log_file_path = os.path.join(file_path, 'stderr.txt')
+        # 日志上传到minio
+        minio.upload_file(f'{task_id}/stderr.txt', log_file_path)
+        # 文件移动到archive下进行归档
+        archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
+        if os.path.isdir(archive_path):
+            shutil.rmtree(archive_path)
+        shutil.move(file_path, configs.ARCHIVE_PATH)
 
 
 async def send_mail(task_id, task_status='SUCCESS', job_id=None):

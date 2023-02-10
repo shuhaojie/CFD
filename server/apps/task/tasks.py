@@ -10,7 +10,7 @@ from dateutil.parser import parse
 from datetime import datetime, timedelta
 
 from config import configs
-from apps.models import Uknow, FluentProf, Archive
+from apps.models import Uknow, FluentProf
 from dbs.database import TORTOISE_ORM
 from utils.constant import Status
 from apps.task.utils import FileTool, get_token, download_file, upload_file, create_job, create_remote_folder, \
@@ -176,11 +176,6 @@ async def monitor_task(task_id, celery_task_id):
                         )
                         widget = await task_widget(task_id, task_status='FAIL')
                         await Uknow.filter(task_id=task_id).update(widgets=widget)
-                        await Archive.create(
-                            task_id=task_id,
-                            task_type='fluent',
-                            task_status=Status.FAIL
-                        )
                         await send_mail(task_id, task_status='FAIL', job_id=job_id)
                         icem_finish = True
                         fluent_finish = True
@@ -197,11 +192,6 @@ async def monitor_task(task_id, celery_task_id):
                 )
                 widget = await task_widget(task_id, task_status='FAIL')
                 await Uknow.filter(task_id=task_id).update(widgets=widget)
-                await Archive.create(
-                    task_id=task_id,
-                    task_type='icem',
-                    task_status=Status.FAIL
-                )
                 # 结束循环
                 await send_mail(task_id, task_status='FAIL', job_id=job_id)
                 icem_finish = True
