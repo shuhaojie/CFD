@@ -489,7 +489,7 @@ def task_fail(task_id, job_id, headers):
     shutil.move(file_path, configs.ARCHIVE_PATH)
 
 
-async def send_mail(task_id, task_status='SUCCESS'):
+async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     query = await Uknow.filter(task_id=task_id).first()
     order_id = query.order_id
     # send_to = get_email_by_order_id(order_id)
@@ -515,11 +515,13 @@ async def send_mail(task_id, task_status='SUCCESS'):
 
     if task_status == 'SUCCESS':
         subject = 'CFD任务成功'
-        message = f'任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
+        message = f'订单id:{order_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
     else:
         subject = 'CFD任务失败'
-        message = f'任务id:{task_id}'
-
+        if job_id is not None:
+            message = f'任务id:{task_id}\n\njob_id:{job_id}'
+        else:
+            message = f'系统错误, 任务id:{task_id}'
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
     msg['From'] = me

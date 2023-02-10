@@ -181,7 +181,7 @@ async def monitor_task(task_id, celery_task_id):
                             task_type='fluent',
                             task_status=Status.FAIL
                         )
-                        await send_mail(task_id, task_status='FAIL')
+                        await send_mail(task_id, task_status='FAIL', job_id=job_id)
                         icem_finish = True
                         fluent_finish = True
                     else:
@@ -203,7 +203,7 @@ async def monitor_task(task_id, celery_task_id):
                     task_status=Status.FAIL
                 )
                 # 结束循环
-                await send_mail(task_id, task_status='FAIL')
+                await send_mail(task_id, task_status='FAIL', job_id=job_id)
                 icem_finish = True
             else:
                 # 如果任务既没有成功, 也没有失败, 那么就休眠5秒后再轮询
