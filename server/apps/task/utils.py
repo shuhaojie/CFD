@@ -525,15 +525,15 @@ async def send_mail(task_id, task_status='SUCCESS'):
     msg['From'] = me
     msg['To'] = you
     msg.attach(MIMEText(message))
+    if task_status == 'SUCCESS':
+        file_path = os.path.join(configs.ARCHIVE_PATH, task_id, 'ensight_result.encas')
+        part = MIMEBase('application', "octet-stream")
+        with open(file_path, 'rb') as file:
+            part.set_payload(file.read())
 
-    file_path = os.path.join(configs.ARCHIVE_PATH, task_id, 'ensight_result.encas')
-    part = MIMEBase('application', "octet-stream")
-    with open(file_path, 'rb') as file:
-        part.set_payload(file.read())
-    encoders.encode_base64(part)
-    part.add_header('Content-Disposition',
-                    'attachment; filename={}'.format(Path(file_path).name))
-    msg.attach(part)
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', 'attachment; filename={}'.format(Path(file_path).name))
+        msg.attach(part)
 
     s = smtplib.SMTP_SSL(BUSINESS.EMAIL_HOST)
     s.login(me, my_password)
