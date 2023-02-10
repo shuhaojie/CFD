@@ -441,6 +441,7 @@ def create_job(task_id, task_type, md5, headers, hardware_level='middle', solver
         json_data['inputs'][3]['value'] = md5
         json_data['name'] = task_name
         r = requests.post(base_url, json=json_data, headers=headers)
+        print(r.json())
         return r
 
 
