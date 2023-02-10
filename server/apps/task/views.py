@@ -16,7 +16,6 @@ from .schemas import UploadResponse
 from worker import run_task
 from config import configs
 from utils.constant import Status
-from conftest import get_new_celery_worker
 
 uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 
@@ -88,7 +87,6 @@ async def upload(file: UploadFile,
         standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
-        get_new_celery_worker()
         total_tasks = await IcemTask.filter(task_status=Status.PENDING).all()
         if len(total_tasks) < 10:
             run_task.apply_async((task_id,))
