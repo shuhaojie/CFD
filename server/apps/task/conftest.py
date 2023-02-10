@@ -1,51 +1,19 @@
-import os
-import sys
-import smtplib
-from pathlib import Path
-from email.mime.base import MIMEBase
-from email import encoders
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import COMMASPACE
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, BASE_DIR)
-
-from utils.constant import BUSINESS
+import json
+import subprocess
 
 
-def send_mail(task_status='SUCCESS'):
-    me = BUSINESS.EMAIL_FROM
-    my_password = BUSINESS.EMAIL_PASSWORD
-    you = 'shuhaojie@unionstrongtech.com,huangwuying@unionstrongtech.com'
-
-    if task_status == 'SUCCESS':
-        subject = '再次测试'
-        message = '附件为encas文件!!'
+def get_new_celery_worker():
+    bash_command = "celery -A worker inspect active -j"
+    process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    output_string = output.decode("utf-8")[:-17]
+    output_json = json.loads(output_string)
+    number_of_celery_worker = 0
+    if len(list(output_json.values())[0]) == 0:  # 后台celery记录为空
+        pass
     else:
-        subject = 'CFD任务测试!!!'
-        message = '附件为日志文件!!!'
-
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subject
-    msg['From'] = me
-    msg['To'] = you
-    msg.attach(MIMEText(message))
-
-    file_path = r'C:\workspaces\CFD\data\ensight_result.encas'
-    part = MIMEBase('application', "octet-stream")
-    with open(file_path, 'rb') as file:
-        part.set_payload(file.read())
-    encoders.encode_base64(part)
-    part.add_header('Content-Disposition',
-                    'attachment; filename={}'.format(Path(file_path).name))
-    msg.attach(part)
-
-    s = smtplib.SMTP_SSL(BUSINESS.EMAIL_HOST)
-    s.login(me, my_password)
-
-    s.send_message(msg)
-    s.quit()
-
-
-send_mail()
+        for value in list(output_json.values())[0]:
+            for v in value.values():
+                if v == 'run_task':
+                    number_of_celery_worker += 1
+    return int(number_of_celery_worker / 2), output_json

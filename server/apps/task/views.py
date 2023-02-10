@@ -16,6 +16,7 @@ from .schemas import UploadResponse
 from worker import run_task
 from config import configs
 from utils.constant import Status
+from conftest import get_new_celery_worker
 
 uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 
@@ -87,6 +88,7 @@ async def upload(file: UploadFile,
         standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
+        get_new_celery_worker()
         total_tasks = await IcemTask.filter(task_status=Status.PENDING).all()
         if len(total_tasks) < 10:
             run_task.apply_async((task_id,))
@@ -97,14 +99,9 @@ async def upload(file: UploadFile,
             )
             return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
         else:
-            # 如果任务数过多, 需要排队
-            max_queue = await Uknow.all().annotate(data=Max('task_queue')).values('data')
-            await Uknow.filter(task_id=task_id).update(
-                task_queue=max_queue[0]['data'] + 1,
-            )
             # 即使任务数过多, publisher也需要将发布任务
             run_task.apply_async((task_id,))
-            return {'code': 200, "message": f"文件上传成功, 任务排队中, 排队号:{max_queue[0]['data'] + 1}",
+            return {'code': 200, "message": "文件上传成功, 任务排队中",
                     'task_id': task_id, 'status': True}
 
 
