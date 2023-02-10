@@ -16,6 +16,7 @@ from worker import run_task
 from celery_utils import get_celery_worker
 from config import configs
 from utils.constant import Status
+from logs import api_log
 
 uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 
@@ -88,7 +89,8 @@ async def upload(file: UploadFile,
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
         total_tasks = get_celery_worker()
-        if len(total_tasks) < 10:
+        api_log.info(f'Total Task:{total_tasks}')
+        if total_tasks < 10:
             run_task.apply_async((task_id,))
             await Uknow.filter(task_id=task_id).update(
                 icem_status=Status.PENDING,
