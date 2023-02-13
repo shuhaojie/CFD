@@ -94,6 +94,9 @@ class Config(Settings):
     ADMIN_USERNAME: Optional[str] = Field(None, env="ADMIN_USERNAME")
     ADMIN_PASSWD: Optional[str] = Field(None, env="ADMIN_PASSWD")
 
+    # 项目管理员邮箱
+    ADMIN_EMAIL: Optional[str] = Field(None, env="ADMIN_EMAIL")
+
 
 @lru_cache()  # 结果缓存 仅启动时运行一次
 def get_configs():
