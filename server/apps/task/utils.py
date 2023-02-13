@@ -523,12 +523,12 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     m, s = divmod(total_seconds, 60)
 
     if task_status == 'SUCCESS':
-        subject = 'CFD任务成功'
-        message = f'订单id:{order_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
+        subject = f'任务{task_id}成功'
+        message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
     else:
-        subject = 'CFD任务失败'
+        subject = f'任务{task_id}失败'
         if job_id is not None:
-            message = f'任务id:{task_id}\n\njob_id:{job_id}'
+            message = f'订单id:{order_id}\n\n任务id:{task_id}\n\njob_id:{job_id}'
         else:
             message = f'系统错误, 任务id:{task_id}'
     msg = MIMEMultipart('alternative')
