@@ -94,7 +94,7 @@ async def monitor_task(task_id, celery_task_id):
                     icem_end=icem_end,
                     icem_duration=float((icem_end - icem_start).seconds),
                 )
-                url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
+                url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
                 fluent_dst_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
                 FileTool.make_directory(fluent_dst_path)
                 # 下载fluent.msh文件
@@ -133,7 +133,7 @@ async def monitor_task(task_id, celery_task_id):
                     state = res['state']
                     print(state)
                     if state == 'COMPLETE':
-                        url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result/ensight_result.encas'
+                        url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result/ensight_result.encas'
                         file_path = os.path.join(configs.PREPARE_PATH, task_id)
                         download_file(url, file_path, headers)
                         # 等待文件下载完全下载下来

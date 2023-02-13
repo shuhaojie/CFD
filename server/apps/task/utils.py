@@ -482,7 +482,7 @@ async def task_widget(task_id, task_status='SUCCESS'):
 
 def task_fail(task_id, job_id, headers):
     # 取回失败日志
-    base_url = f'{configs.BASE_URL}/fa/api/v0/download/jobs/job-{job_id}/log/stderr.txt'
+    base_url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/log/stderr.txt'
     file_path = os.path.join(configs.PREPARE_PATH, task_id)
     is_file_downloaded = download_file(base_url, file_path, headers)
     # 日志文件可能下载失败
@@ -554,13 +554,7 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
 
 
 def get_user_info(order_id):
-    if configs.ENVIRONMENT == 'local' or configs.ENVIRONMENT == 'development':
-        base_url = 'http://172.16.1.37:31226'
-    elif configs.ENVIRONMENT == 'production':
-        base_url = 'http://services.unionstrongtech.com'
-    else:
-        base_url = 'http://testservices.unionstrongtech.com'
-    request_url = f'{base_url}/api/v1/station/cfd_get_user_info'
+    request_url = f'{configs.UPIXEL_URL}/api/v1/station/cfd_get_user_info'
     r = requests.get(request_url, params={'order_id': order_id})
     return r.json()
 
