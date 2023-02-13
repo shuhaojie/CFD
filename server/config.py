@@ -88,7 +88,8 @@ class Config(Settings):
     REDIS_SENTRY: Optional[str] = Field(None, env="REDIS_SENTRY")
 
     # 第三方url
-    BASE_URL: Optional[str] = Field(None, env="BASE_URL")
+    SUSHI_URL: Optional[str] = Field(None, env="SUSHI_URL")
+    UPIXEL_URL: Optional[str] = Field(None, env="UPIXEL_URL")
 
     # admin页面账号密码
     ADMIN_USERNAME: Optional[str] = Field(None, env="ADMIN_USERNAME")
