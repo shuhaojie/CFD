@@ -137,6 +137,16 @@ python scripts/add.py
 
 v1.1.0新增ADMIN_EMAIL
 
+ENVIRONMENT对应修改, 测试环境为testing, 研发环境为production
+
+## 6. 白名单
+
+研发环境: http://172.16.1.37:31226
+
+测试环境: http://testservices.unionstrongtech.com
+
+正式环境: http://services.unionstrongtech.com
+
 ## 6. 启动服务
 
 ### 1. 启动fastapi
