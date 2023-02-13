@@ -501,11 +501,14 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     query = await Uknow.filter(task_id=task_id).first()
     order_id = query.order_id
     res = get_user_info(order_id)
-    send_to = res['data']['email']
-
+    # 如果找不到数据, 就只发admin一个人
+    if res['data']:
+        send_to = res['data']['email']
+        you = f'{configs.ADMIN_EMAIL},{send_to}'
+    else:
+        you = f'{configs.ADMIN_EMAIL}'
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = f'{configs.ADMIN_EMAIL},{send_to}'
 
     # 任务耗时
     if query.fluent_end:
@@ -523,8 +526,12 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     m, s = divmod(total_seconds, 60)
 
     if task_status == 'SUCCESS':
-        subject = f'任务{task_id}成功'
-        message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
+        if res['data']:
+            subject = f'任务{task_id}成功'
+            message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
+        else:
+            subject = f'任务{task_id}成功'
+            message = f'注意:该订单的操作人员没有邮箱, 请将结果发给它!\n\n订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
     else:
         subject = f'任务{task_id}失败'
         if job_id is not None:
