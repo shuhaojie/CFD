@@ -135,9 +135,13 @@ python scripts/add.py
 
 ## 5. 环境变量
 
-v1.1.0新增ADMIN_EMAIL
+v1.1.0新增:
+
+ADMIN_EMAIL, UPIXEL_URL
 
 ENVIRONMENT对应修改, 测试环境为testing, 研发环境为production
+
+BASE_URL修改为SUSHI_URL
 
 ## 6. 白名单
 
