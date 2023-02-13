@@ -10,7 +10,7 @@ from typing import List
 from fastapi import Query
 
 from apps.models import Uknow
-from .utils import FileTool
+from .utils import FileTool, get_user_info
 from .schemas import UploadResponse
 from worker import run_task
 from celery_utils import get_celery_worker
@@ -71,6 +71,8 @@ async def upload(file: UploadFile,
         task_id = f'{now_time.year}{month}{day}{hour}{minute}{second}0{index}'
         # 5. 数据入库
         str_uuid = str(uuid.uuid1())
+        res = get_user_info(order_id)
+        username = res['data']['username']
         await Uknow.create(
             uuid=str_uuid,
             task_id=task_id,

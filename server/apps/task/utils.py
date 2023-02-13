@@ -19,7 +19,6 @@ from email.mime.base import MIMEBase
 from email import encoders
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import COMMASPACE, formatdate
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, BASE_DIR)
@@ -501,11 +500,12 @@ def task_fail(task_id, job_id, headers):
 async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     query = await Uknow.filter(task_id=task_id).first()
     order_id = query.order_id
-    # send_to = get_email_by_order_id(order_id)
+    res = get_user_info(order_id)
+    send_to = res['data']['email']
 
     me = BUSINESS.EMAIL_FROM
     my_password = BUSINESS.EMAIL_PASSWORD
-    you = 'shuhaojie@unionstrongtech.com,liuyongjian@unionstrongtech.com'
+    you = f'{configs.ADMIN_EMAIL},{send_to}'
 
     # 任务耗时
     if query.fluent_end:
@@ -553,7 +553,7 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     s.quit()
 
 
-def get_email_by_order_id(order_id):
+def get_user_info(order_id):
     if configs.ENVIRONMENT == 'local' or configs.ENVIRONMENT == 'development':
         base_url = 'http://172.16.1.37:31226'
     elif configs.ENVIRONMENT == 'production':
