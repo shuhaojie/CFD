@@ -1,4 +1,5 @@
 import json
+import requests
 import subprocess
 
 
@@ -17,3 +18,16 @@ def get_new_celery_worker():
                 if v == 'run_task':
                     number_of_celery_worker += 1
     return int(number_of_celery_worker / 2), output_json
+
+
+def get_user_info(order_id):
+    base_url = 'http://172.16.1.37:31226'
+    request_url = f'{base_url}/api/v1/station/cfd_get_user_info'
+    r = requests.get(request_url, params={'order_id': order_id})
+    print(r)
+    return r.json()
+
+
+res = get_user_info('2022092900013')
+email = res['data']['email']
+print(email)

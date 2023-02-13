@@ -560,7 +560,7 @@ def get_user_info(order_id):
         base_url = 'http://services.unionstrongtech.com'
     else:
         base_url = 'http://testservices.unionstrongtech.com'
-    request_url = f'{base_url}/api/v1/station/get_email'
+    request_url = f'{base_url}/api/v1/station/cfd_get_user_info'
     r = requests.get(request_url, params={'order_id': order_id})
     return r.json()
 
