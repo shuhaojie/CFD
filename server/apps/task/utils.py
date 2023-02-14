@@ -405,7 +405,7 @@ def download_complete(file_path):
 def create_job(task_id, task_type, md5, headers, hardware_level='middle', solver='3ddp', parallel_number=28):
     base_url = 'http://120.48.150.243/api/v1/jobs'
     now = datetime.now()
-    task_name = f'{now.year}{now.month}{now.day}{now.hour}{now.minute}{now.second}_{task_type}'
+    task_name = f'{now.year}{now.month}{now.day}{now.hour}{now.minute}{now.second}_{task_type}_{configs.ENVIRONMENT}'
     if task_type == 'icem':
         # 目前暂时用这个固定配置, 这个是根据用户选择的配置来的
         if hardware_level == 'middle':
@@ -420,10 +420,6 @@ def create_job(task_id, task_type, md5, headers, hardware_level='middle', solver
         json_data['name'] = task_name
         # https://stackoverflow.com/a/22567429/10844937
         r = requests.post(base_url, json=json_data, headers=headers)
-        print(base_url)
-        print(json_data)
-        print(headers)
-        print(r.json())
         return r
     else:
         # 目前暂时用这个固定配置, 这个是根据用户选择的配置来的
@@ -444,7 +440,6 @@ def create_job(task_id, task_type, md5, headers, hardware_level='middle', solver
         json_data['inputs'][3]['value'] = md5
         json_data['name'] = task_name
         r = requests.post(base_url, json=json_data, headers=headers)
-        print(r.json())
         return r
 
 
