@@ -85,7 +85,7 @@ async def upload(file: UploadFile,
             icem_hardware_level=icem_hardware_level,
             fluent_hardware_level=fluent_hardware_level,
             fluent_prof=prof,
-            data_statue=Status.SUCCESS,
+            data_status=Status.SUCCESS,
             order_id=order_id,
         )
         # 6. 对文件重命名
