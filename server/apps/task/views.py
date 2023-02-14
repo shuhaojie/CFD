@@ -94,21 +94,13 @@ async def upload(file: UploadFile,
         # 7. 发送异步任务
         total_tasks = get_celery_worker()
         print(f'Total Task:{total_tasks}')
-        api_log.info(f'Total Task:{total_tasks}')
+        # 无论worker数有没有超过10个, 都需要将任务发布出去
+        run_task.apply_async((task_id,))
         if total_tasks < 10:
-            run_task.apply_async((task_id,))
-            await Uknow.filter(task_id=task_id).update(
-                icem_status=Status.PENDING,
-                icem_start=datetime.datetime.now(),
-                create_time=datetime.datetime.now(),
-            )
+            await Uknow.filter(task_id=task_id).update(icem_status=Status.PENDING)
             return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
         else:
-            # 即使任务数过多, publisher也需要将发布任务
-            run_task.apply_async((task_id,))
-            await Uknow.filter(task_id=task_id).update(
-                icem_status=Status.QUEUE,
-            )
+            await Uknow.filter(task_id=task_id).update(icem_status=Status.QUEUE)
             return {'code': 200, "message": "文件上传成功, 任务排队中", 'task_id': task_id, 'status': True}
 
 
