@@ -1,5 +1,6 @@
 import json
 import subprocess
+from worker import celery as celery_app
 
 
 def get_celery_worker():
@@ -17,3 +18,8 @@ def get_celery_worker():
                 if v == 'run_task':
                     number_of_celery_worker += 1
     return int(number_of_celery_worker / 2)
+
+
+def get_all_worker():
+    i = celery_app.control.inspect('worker')
+    return i.active()
