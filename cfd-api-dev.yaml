@@ -2,7 +2,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: cfd-celery
-  namespace: cfd-test
+  namespace: cfd-dev
   labels:
     app: cfd-celery
   annotations:
