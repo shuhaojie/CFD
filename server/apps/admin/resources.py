@@ -4,6 +4,7 @@ import pytz
 from typing import List
 from starlette.requests import Request
 from apps.models import Uknow, FluentHardware, IcemHardware
+from config import configs
 from utils.constant import Status
 from fastapi_admin.app import app
 from fastapi_admin.file_upload import FileUpload
@@ -153,7 +154,7 @@ class UknowResource(Model):
     model = Uknow
     icon = "fas fa-home"
     url = "/admin"
-    page_pre_title = "uknow数据列表"
+    page_pre_title = f"uknow数据列表-{configs.ENVIRONMENT}"
     filters = [
         filters.Search(
             name="username",
