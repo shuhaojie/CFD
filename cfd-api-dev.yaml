@@ -2,7 +2,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: cfd-celery
-  namespace: cfd-test
+  namespace: cfd-dev
   labels:
     app: cfd-celery
   annotations:
@@ -26,9 +26,9 @@ spec:
           hostPath:
             path: /etc/localtime
             type: ''
-        - name: cfd-workspaces-test-data
+        - name: cfd-workspaces-data
           persistentVolumeClaim:
-            claimName: cfd-workspaces-test-data
+            claimName: cfd-workspaces-data
       containers:
         - name: cfd-api
           image: '$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:dev_$BUILD_NUMBER'
@@ -41,10 +41,10 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: cfd-test-configmap
+                name: cfd-configmap
           resources: {}
           volumeMounts:
-            - name: cfd-workspaces-test-data
+            - name: cfd-workspaces-data
               mountPath: /workspaces/data
             - name: host-time
               readOnly: true
@@ -60,10 +60,10 @@ spec:
           workingDir: /server/
           envFrom:
             - configMapRef:
-                name: cfd-test-configmap
+                name: cfd-configmap
           resources: {}
           volumeMounts:
-            - name: cfd-workspaces-test-data
+            - name: cfd-workspaces-data
               mountPath: /workspaces/data
             - name: host-time
               readOnly: true
