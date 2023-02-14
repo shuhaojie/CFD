@@ -74,6 +74,7 @@ async def upload(file: UploadFile,
         res = get_user_info(order_id)
         if not res['status']:
             return {'code': 200, "message": res['message'], 'task_id': None, 'status': False}
+        username = res['data']['username']
         await Uknow.create(
             uuid=str_uuid,
             task_id=task_id,
@@ -92,6 +93,7 @@ async def upload(file: UploadFile,
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
         total_tasks = get_celery_worker()
+        print(f'Total Task:{total_tasks}')
         api_log.info(f'Total Task:{total_tasks}')
         if total_tasks < 10:
             run_task.apply_async((task_id,))

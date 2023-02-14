@@ -131,7 +131,6 @@ async def monitor_task(task_id, celery_task_id):
                 while not fluent_finish:
                     res = reverse_job(job_id, headers)
                     state = res['state']
-                    print(state)
                     if state == 'COMPLETE':
                         url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result/ensight_result.encas'
                         file_path = os.path.join(configs.PREPARE_PATH, task_id)
