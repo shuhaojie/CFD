@@ -166,9 +166,8 @@ class UknowResource(Model):
     ]
     fields = [
         SystemComputeFields(name="uuid", label="id", input_=inputs.DisplayOnly()),
-        Field(name="task_id", label="任务id", input_=inputs.DisplayOnly()),
-        Field(name="task_name", label="任务名称", input_=inputs.DisplayOnly()),
-        Field(name="username", label="用户名", input_=inputs.DisplayOnly()),
+        Field(name="order_id", label="订单id", input_=inputs.DisplayOnly()),
+        Field(name="username", label="操作人员", input_=inputs.DisplayOnly()),
         DateTimeComputeFields(name="create_time", label="创建时间", input_=inputs.DisplayOnly()),
         StatusComputeFields(name="data_status", label="任务状态", input_=inputs.DisplayOnly()),
         TotalTimeComputeFields(name="fluent_duration", label="任务耗时", input_=inputs.DisplayOnly()),
