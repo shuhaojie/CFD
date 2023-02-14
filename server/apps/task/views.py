@@ -72,8 +72,8 @@ async def upload(file: UploadFile,
         # 5. 数据入库
         str_uuid = str(uuid.uuid1())
         res = get_user_info(order_id)
-        if res['data']:
-            username = res['data']['username']
+        if not res['status']:
+            return {'code': 200, "message": res['message'], 'task_id': None, 'status': False}
         await Uknow.create(
             uuid=str_uuid,
             task_id=task_id,
