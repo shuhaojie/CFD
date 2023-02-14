@@ -33,8 +33,8 @@ rm -rf .env'''
         container('base') {
           withCredentials([usernamePassword(credentialsId : 'harbor' ,passwordVariable : 'DOCKER_PASS' ,usernameVariable : 'DOCKER_USER' ,)]) {
             sh 'echo "$DOCKER_PASS" | docker login $REGISTRY -u "$DOCKER_USER" --password-stdin'
-            sh 'docker build -f Dockerfile -t $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BUILD_NUMBER  .'
-            sh 'docker push $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BUILD_NUMBER '
+            sh 'docker build -f Dockerfile -t $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:dev_$BUILD_NUMBER  .'
+            sh 'docker push $REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:dev_$BUILD_NUMBER '
           }
  
         }
@@ -49,14 +49,14 @@ rm -rf .env'''
           withCredentials([kubeconfigContent(credentialsId : 'k8s-test' ,variable : 'TEST_KUBECONFIG_CONTENT' ,)]) {
             sh '''mkdir ~/.kube
 echo "$TEST_KUBECONFIG_CONTENT" > ~/.kube/config
-envsubst <  cfd-deployment.yaml | kubectl apply -f -'''
+envsubst <  cfd-api-dev.yaml | kubectl apply -f -'''
           }
  
         }
-	 mail(to: 'shuhaojie@unionstrongtech.com', cc: 'songyanlong@unionstrongtech.com', subject: '测试环境后端构建完成！', body: """ALL;
-                       CFD测试环境构建完成；
+	 mail(to: 'shuhaojie@unionstrongtech.com', cc: 'songyanlong@unionstrongtech.com', subject: '研发环境后端构建完成！', body: """ALL;
+                       CFD研发环境构建完成；
                        分支：$BRANCH_NAME
-                       镜像：$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:test_$BUILD_NUMBER
+                       镜像：$REGISTRY/$DOCKERHUB_NAMESPACE/$APP_NAME:dev_$BUILD_NUMBER
                        服务：$APP_NAME
                        构建详情URL地址: ${BUILD_URL}
                   """)
