@@ -21,5 +21,5 @@ def get_celery_worker():
 
 
 def get_all_worker():
-    i = celery_app.control.inspect('worker')
-    return i.active()
+    i = celery_app.control.inspect()
+    i.active()

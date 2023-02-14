@@ -93,9 +93,8 @@ async def upload(file: UploadFile,
         shutil.move(write_path, standard_file)
         # 7. 发送异步任务
         total_tasks = get_celery_worker()
-        all_task = get_all_worker()
+        get_all_worker()
         print(f'Total Task:{total_tasks}')
-        print(f'All Task:{all_task}')
         # 无论worker数有没有超过10个, 都需要将任务发布出去
         run_task.apply_async((task_id,))
         if total_tasks < 10:
