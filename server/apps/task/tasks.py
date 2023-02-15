@@ -33,6 +33,7 @@ async def monitor_task(task_id, celery_task_id):
         await Uknow.filter(task_id=task_id).update(
             icem_start=datetime.now(),
             create_time=datetime.now(),
+            icem_status=Status.PENDING,
         )
         uknow_query = await Uknow.filter(task_id=task_id).first()
 
