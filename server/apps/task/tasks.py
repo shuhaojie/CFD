@@ -82,9 +82,9 @@ async def monitor_task(task_id, celery_task_id):
             # 获取任务状态
             res = reverse_job(job_id, headers)
             state = res['state']
-            api_log.info(state)
+            api_log.info(f'Icem job {job_id} state:{state}')
             if state == 'COMPLETE':
-                api_log.info('Icem finish!!!!')
+                api_log.info(f'Icem job {job_id} finish!!!!')
                 # 采用速石传回来的 任务开始/任务结束 时间, 方便后续计算费用
                 icem_start, icem_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                     res['finishedAt']) + timedelta(hours=8)
@@ -131,8 +131,9 @@ async def monitor_task(task_id, celery_task_id):
                 while not fluent_finish:
                     res = reverse_job(job_id, headers)
                     state = res['state']
+                    api_log.info(f'Fluent job {job_id} state:{state}')
                     if state == 'COMPLETE':
-                        api_log.info('Fluent finish!!!!')
+                        api_log.info(f'Fluent job {job_id} finish!!!!')
                         url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result/ensight_result.encas'
                         file_path = os.path.join(configs.PREPARE_PATH, task_id)
                         download_file(url, file_path, headers)
