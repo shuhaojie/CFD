@@ -90,8 +90,7 @@ class StatusComputeFields(ComputeField):
                 elif query.icem_status == Status.FAIL:
                     return 'Icem处理失败'
                 elif query.icem_status == Status.QUEUE:
-                    queue_number = query.task_queue
-                    return f'任务排队中, 排队号{queue_number}'
+                    return f'任务排队中'
                 else:
                     if not query.fluent_status:
                         return 'Icem处理成功'
@@ -134,9 +133,9 @@ class LogFileComputeFields(ComputeField):
         if query.fluent_result_file_path:
             return query.fluent_result_file_path
         if query.icem_log_file_path:
-            return query.icem_log_file_path
+            return '-'
         if query.fluent_log_file_path:
-            return query.fluent_log_file_path
+            return '-'
 
 
 class WidgetComputeFields(ComputeField):
@@ -173,7 +172,7 @@ class UknowResource(Model):
         TotalTimeComputeFields(name="fluent_duration", label="任务耗时", input_=inputs.DisplayOnly()),
         WidgetComputeFields(name="widgets", label="任务花费", input_=inputs.DisplayOnly()),
         FluentLevelComputeFields(name="fluent_hardware_level", label="硬件配置", input_=inputs.DisplayOnly()),
-        LogFileComputeFields(name="fluent_result_file_path", label="结果/日志文件", input_=inputs.DisplayOnly()),
+        LogFileComputeFields(name="fluent_result_file_path", label="结果文件", input_=inputs.DisplayOnly()),
     ]
 
     async def get_toolbar_actions(self, request: Request) -> List[ToolbarAction]:
