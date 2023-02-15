@@ -14,7 +14,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     `created_at` DATETIME(6) NOT NULL  DEFAULT CURRENT_TIMESTAMP(6)
 ) CHARACTER SET utf8mb4;
 CREATE TABLE IF NOT EXISTS `archive` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0b1d2612-871e-11ed-87b8-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT 'c1a5d26e-acf2-11ed-a813-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_type` VARCHAR(255) NOT NULL  COMMENT '任务类别',
     `task_status` VARCHAR(255) NOT NULL  COMMENT '任务状态'
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `fluent_prof` (
     `prof_path` VARCHAR(255) NOT NULL  COMMENT 'prof文件路径'
 ) CHARACTER SET utf8mb4 COMMENT='fluent prof文件对应表';
 CREATE TABLE IF NOT EXISTS `fluent_task` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0b1d2612-871e-11ed-87b8-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT 'c1a5d26e-acf2-11ed-a813-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_status` VARCHAR(255)   COMMENT '任务状态',
     `fluent_md5` VARCHAR(255)   COMMENT 'fluent md5值',
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `icem_hardware` (
     `system_platform` VARCHAR(255) NOT NULL  COMMENT '操作系统类型'
 ) CHARACTER SET utf8mb4 COMMENT='Icem硬件配置表';
 CREATE TABLE IF NOT EXISTS `icem_task` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0b1d2612-871e-11ed-87b8-e0d045dbb4d7',
+    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT 'c1a5d26e-acf2-11ed-a813-e0d045dbb4d7',
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `task_status` VARCHAR(255)   COMMENT '任务状态',
     `icem_md5` VARCHAR(255)   COMMENT 'icem md5值',
@@ -69,13 +69,14 @@ CREATE TABLE IF NOT EXISTS `token` (
     `expire_time` DATETIME(6) NOT NULL  COMMENT 'token过期时间'
 ) CHARACTER SET utf8mb4;
 CREATE TABLE IF NOT EXISTS `uknow` (
-    `uuid` VARCHAR(255) NOT NULL  PRIMARY KEY DEFAULT '0b1d2612-871e-11ed-87b8-e0d045dbb4d7',
+    `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     `task_id` VARCHAR(255) NOT NULL  COMMENT '任务id',
     `create_time` DATETIME(6)   COMMENT '创建时间',
     `task_name` VARCHAR(255)   COMMENT '任务名称',
     `username` VARCHAR(255)   COMMENT '用户名',
     `mac_address` VARCHAR(255) NOT NULL  COMMENT 'MAC地址',
     `md5` VARCHAR(255) NOT NULL  COMMENT '文件md5值',
+    `order_id` VARCHAR(255) NOT NULL  COMMENT '订单id',
     `icem_hardware_level` VARCHAR(255) NOT NULL  COMMENT 'Icem硬件配置等级',
     `fluent_hardware_level` VARCHAR(255) NOT NULL  COMMENT 'Fluent硬件配置等级',
     `fluent_prof` LONGTEXT NOT NULL  COMMENT 'fluent_prof文件',
