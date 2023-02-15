@@ -21,7 +21,7 @@ class SystemComputeFields(ComputeField):
     """
 
     async def get_value(self, request: Request, obj: dict):
-        system_query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        system_query = await Uknow.filter(id=obj.get("id", None)).first()
         if system_query:
             return system_query.task_id
         else:
@@ -34,7 +34,7 @@ class DateTimeComputeFields(ComputeField):
     """
 
     async def get_value(self, request: Request, obj: dict):
-        system_query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        system_query = await Uknow.filter(id=obj.get("id", None)).first()
         if system_query.create_time:
             return system_query.create_time.strftime("%Y-%m-%d %H:%M:%S")
         else:
@@ -47,7 +47,7 @@ class IcemLevelComputeFields(ComputeField):
     """
 
     async def get_value(self, request: Request, obj: dict):
-        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.icem_hardware_level == 'low':
             return '低'
         elif query.icem_hardware_level == 'medium':
@@ -62,7 +62,7 @@ class FluentLevelComputeFields(ComputeField):
     """
 
     async def get_value(self, request: Request, obj: dict):
-        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.fluent_hardware_level == 'low':
             fluent = '低'
         elif query.fluent_hardware_level == 'medium':
@@ -80,7 +80,7 @@ class FluentLevelComputeFields(ComputeField):
 
 class StatusComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
-        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.data_status == 'success':
             if not query.icem_status:
                 return '数据上传成功'
@@ -109,7 +109,7 @@ class StatusComputeFields(ComputeField):
 
 class TotalTimeComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
-        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        query = await Uknow.filter(id=obj.get("id", None)).first()
         # 如果有fluent_end, 优先用这个值
         if query.fluent_end:
             total_seconds = (query.fluent_end - query.create_time).total_seconds()
@@ -129,7 +129,7 @@ class TotalTimeComputeFields(ComputeField):
 
 class LogFileComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
-        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.fluent_result_file_path:
             return query.fluent_result_file_path
         if query.icem_log_file_path:
@@ -140,7 +140,7 @@ class LogFileComputeFields(ComputeField):
 
 class WidgetComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
-        query = await Uknow.filter(uuid=obj.get("uuid", None)).first()
+        query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.widgets:
             return f'{query.widgets}元'
         else:
@@ -164,7 +164,7 @@ class UknowResource(Model):
         filters.Date(name="create_time", label="date"),
     ]
     fields = [
-        SystemComputeFields(name="uuid", label="id", input_=inputs.DisplayOnly()),
+        SystemComputeFields(name="id", label="id", input_=inputs.DisplayOnly()),
         Field(name="order_id", label="订单id", input_=inputs.DisplayOnly()),
         Field(name="username", label="操作人员", input_=inputs.DisplayOnly()),
         DateTimeComputeFields(name="create_time", label="创建时间", input_=inputs.DisplayOnly()),
