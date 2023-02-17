@@ -55,7 +55,7 @@ async def upload(file: UploadFile,
     query = await Uknow.filter(
         Q(order_id=order_id, icem_status=Status.QUEUE) | Q(order_id=order_id, icem_status=Status.PENDING) | Q(
             order_id=order_id, fluent_status=Status.QUEUE) | Q(order_id=order_id, fluent_status=Status.PENDING)).first()
-    if query.exists():
+    if query:
         return {'code': 200, "message": "该订单id正在处理中", "task_id": None, "status": False}
     # 5. 生成task_id
     now_time = datetime.datetime.now()
