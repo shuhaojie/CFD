@@ -7,7 +7,7 @@ from fastapi_restful.inferring_router import InferringRouter
 from pydantic.typing import Literal
 from typing import List
 from fastapi import Query
-
+from tortoise.models import Q
 from apps.models import Uknow
 from .utils import FileTool, get_user_info
 from .schemas import UploadResponse
@@ -49,56 +49,61 @@ async def upload(file: UploadFile,
     if file_md5 != md5:
         return {'code': 200, "message": "md5校验未通过, 请检查数据", "task_id": None, "status": False}
     # 3. 检查文件是否是zip文件
-    elif not file.filename.endswith('zip'):
+    if file.filename.endswith('zip'):
         return {'code': 200, "message": "请上传zip文件", "task_id": None, "status": False}
+    # 4. 判断order_id是否正在跑或者排队
+    query = await Uknow.filter(
+        Q(order_id=order_id, icem_status=Status.QUEUE) | Q(order_id=order_id, icem_status=Status.PENDING) | Q(
+            order_id=order_id, fluent_status=Status.QUEUE) | Q(order_id=order_id, fluent_status=Status.PENDING)).first()
+    if query.exists():
+        return {'code': 200, "message": "该订单id正在处理中", "task_id": None, "status": False}
+    # 5. 生成task_id
+    now_time = datetime.datetime.now()
+    query = await Uknow.filter(create_time__year=now_time.year,
+                               create_time__month=now_time.month,
+                               create_time__day=now_time.day,
+                               create_time__hour=now_time.hour,
+                               create_time__minute=now_time.minute,
+                               create_time__second=now_time.second)
+    index = len(query) + 1
+    index = f'0{str(index)}' if index < 10 else f'{str(index)}'
+    month = f'0{str(now_time.month)}' if now_time.month < 10 else f'{str(now_time.month)}'
+    day = f'0{str(now_time.day)}' if now_time.day < 10 else f'{str(now_time.day)}'
+    hour = f'0{str(now_time.hour)}' if now_time.hour < 10 else f'{str(now_time.hour)}'
+    minute = f'0{str(now_time.minute)}' if now_time.minute < 10 else f'{str(now_time.minute)}'
+    second = f'0{str(now_time.second)}' if now_time.second < 10 else f'{str(now_time.second)}'
+    task_id = f'{now_time.year}{month}{day}{hour}{minute}{second}0{index}'
+    # 6. 数据入库
+    res = get_user_info(order_id)
+    if not res['status']:
+        return {'code': 200, "message": res['message'], 'task_id': None, 'status': False}
+    username = res['data']['username']
+    await Uknow.create(
+        task_id=task_id,
+        md5=md5,
+        username=username,
+        mac_address=mac_address,
+        task_name=task_name,
+        icem_hardware_level=icem_hardware_level,
+        fluent_hardware_level=fluent_hardware_level,
+        fluent_prof=prof,
+        data_status=Status.SUCCESS,
+        order_id=order_id,
+    )
+    # 7. 对文件重命名
+    standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')
+    shutil.move(write_path, standard_file)
+    # 8. 发送异步任务
+    total_tasks = get_celery_worker()
+    print(f'Total Task:{total_tasks}')
+    # 无论worker数有没有超过10个, 都需要将任务发布出去
+    run_task.apply_async((task_id,))
+    if total_tasks < 10:
+        await Uknow.filter(task_id=task_id).update(icem_status=Status.PENDING)
+        return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
     else:
-        # 4. 生成task_id
-        now_time = datetime.datetime.now()
-        query = await Uknow.filter(create_time__year=now_time.year,
-                                   create_time__month=now_time.month,
-                                   create_time__day=now_time.day,
-                                   create_time__hour=now_time.hour,
-                                   create_time__minute=now_time.minute,
-                                   create_time__second=now_time.second)
-        index = len(query) + 1
-        index = f'0{str(index)}' if index < 10 else f'{str(index)}'
-        month = f'0{str(now_time.month)}' if now_time.month < 10 else f'{str(now_time.month)}'
-        day = f'0{str(now_time.day)}' if now_time.day < 10 else f'{str(now_time.day)}'
-        hour = f'0{str(now_time.hour)}' if now_time.hour < 10 else f'{str(now_time.hour)}'
-        minute = f'0{str(now_time.minute)}' if now_time.minute < 10 else f'{str(now_time.minute)}'
-        second = f'0{str(now_time.second)}' if now_time.second < 10 else f'{str(now_time.second)}'
-        task_id = f'{now_time.year}{month}{day}{hour}{minute}{second}0{index}'
-        # 5. 数据入库
-        res = get_user_info(order_id)
-        if not res['status']:
-            return {'code': 200, "message": res['message'], 'task_id': None, 'status': False}
-        username = res['data']['username']
-        await Uknow.create(
-            task_id=task_id,
-            md5=md5,
-            username=username,
-            mac_address=mac_address,
-            task_name=task_name,
-            icem_hardware_level=icem_hardware_level,
-            fluent_hardware_level=fluent_hardware_level,
-            fluent_prof=prof,
-            data_status=Status.SUCCESS,
-            order_id=order_id,
-        )
-        # 6. 对文件重命名
-        standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')
-        shutil.move(write_path, standard_file)
-        # 7. 发送异步任务
-        total_tasks = get_celery_worker()
-        print(f'Total Task:{total_tasks}')
-        # 无论worker数有没有超过10个, 都需要将任务发布出去
-        run_task.apply_async((task_id,))
-        if total_tasks < 10:
-            await Uknow.filter(task_id=task_id).update(icem_status=Status.PENDING)
-            return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
-        else:
-            await Uknow.filter(task_id=task_id).update(icem_status=Status.QUEUE)
-            return {'code': 200, "message": "文件上传成功, 任务排队中", 'task_id': task_id, 'status': True}
+        await Uknow.filter(task_id=task_id).update(icem_status=Status.QUEUE)
+        return {'code': 200, "message": "文件上传成功, 任务排队中", 'task_id': task_id, 'status': True}
 
 
 @uknow_router.get("/get_status", name="状态查询")
