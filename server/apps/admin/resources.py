@@ -83,14 +83,15 @@ class StatusComputeFields(ComputeField):
         query = await Uknow.filter(id=obj.get("id", None)).first()
         total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
             tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
-        if total_seconds > 3600:
-            return '任务失败'
         if query.data_status == 'success':
             if not query.icem_status:
                 return '数据上传成功'
             else:
                 if query.icem_status == Status.PENDING:
-                    return 'Icem处理中'
+                    if total_seconds > 3600:
+                        return 'Icem处理失败'
+                    else:
+                        return 'Icem处理中'
                 elif query.icem_status == Status.FAIL:
                     return 'Icem处理失败'
                 elif query.icem_status == Status.QUEUE:
@@ -100,7 +101,10 @@ class StatusComputeFields(ComputeField):
                         return 'Icem处理成功'
                     else:
                         if query.fluent_status == Status.PENDING:
-                            return 'Fluent处理中'
+                            if total_seconds > 3600:
+                                return 'Fluent处理失败'
+                            else:
+                                return 'Fluent处理中'
                         elif query.fluent_status == Status.FAIL:
                             return 'Fluent处理失败'
                         else:
@@ -116,22 +120,24 @@ class TotalTimeComputeFields(ComputeField):
         query = await Uknow.filter(id=obj.get("id", None)).first()
         total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
             tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
-        if total_seconds > 3600:
+        # 如果有fluent_end, 优先用这个值
+        if query.fluent_end:
+            total_seconds = (query.fluent_end - query.create_time).total_seconds()
+        # 如果fluent任务是pending, 并且时间大于3600, 此时时间应该为3600
+        elif query.fluent_status == Status.PENDING and total_seconds > 3600:
             total_seconds = 3600
         else:
-            # 如果有fluent_end, 优先用这个值
-            if query.fluent_end:
-                total_seconds = (query.fluent_end - query.create_time).total_seconds()
+            # 如果Icem任务失败, 需要用Icem的时间
+            if query.icem_status == Status.FAIL:
+                total_seconds = (query.icem_end - query.create_time).total_seconds()
+            elif query.icem_status == Status.PENDING and total_seconds > 3600:
+                total_seconds = 3600
             else:
-                # 如果Icem任务失败, 需要用Icem的时间
-                if query.icem_status == Status.FAIL:
-                    total_seconds = (query.icem_end - query.create_time).total_seconds()
+                if query.create_time:
+                    total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
+                        tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
                 else:
-                    if query.create_time:
-                        total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
-                            tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
-                    else:
-                        total_seconds = 0
+                    total_seconds = 0
         m, s = divmod(total_seconds, 60)
         return f'{int(m)}分{int(s)}秒'
 
