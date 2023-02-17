@@ -171,6 +171,7 @@ class UknowResource(Model):
         StatusComputeFields(name="data_status", label="任务状态", input_=inputs.DisplayOnly()),
         TotalTimeComputeFields(name="fluent_duration", label="任务耗时", input_=inputs.DisplayOnly()),
         WidgetComputeFields(name="widgets", label="任务花费", input_=inputs.DisplayOnly()),
+        Field(name="fluent_prof", label="prof文件", input_=inputs.DisplayOnly()),
         FluentLevelComputeFields(name="fluent_hardware_level", label="硬件配置", input_=inputs.DisplayOnly()),
         LogFileComputeFields(name="fluent_result_file_path", label="结果文件", input_=inputs.DisplayOnly()),
     ]
