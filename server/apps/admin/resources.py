@@ -197,9 +197,6 @@ class UknowResource(Model):
     async def cell_attributes(self, request: Request, obj: dict, field: Field) -> dict:
         if field.name == 'data_status' and obj.get("fluent_status") == Status.SUCCESS:
             return {"class": "text-green"}
-        if field.name == 'data_status' and (
-                obj.get("fluent_status") == Status.FAIL or obj.get("icem_status") == Status.FAIL):
-            return {"class": "text-red"}
         return await super().cell_attributes(request, obj, field)
 
     async def get_actions(self, request: Request) -> List[Action]:
