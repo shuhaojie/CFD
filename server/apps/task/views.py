@@ -49,7 +49,7 @@ async def upload(file: UploadFile,
     if file_md5 != md5:
         return {'code': 200, "message": "md5校验未通过, 请检查数据", "task_id": None, "status": False}
     # 3. 检查文件是否是zip文件
-    if file.filename.endswith('zip'):
+    if not file.filename.endswith('zip'):
         return {'code': 200, "message": "请上传zip文件", "task_id": None, "status": False}
     # 4. 判断order_id是否正在跑或者排队
     query = await Uknow.filter(
