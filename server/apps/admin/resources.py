@@ -134,7 +134,10 @@ class TotalTimeComputeFields(ComputeField):
         else:
             # 如果Icem任务失败, 需要用Icem的时间
             if query.icem_status == Status.FAIL:
-                total_seconds = (query.icem_end - query.create_time).total_seconds()
+                if query.create_time:
+                    total_seconds = (query.icem_end - query.create_time).total_seconds()
+                else:
+                    total_seconds = 0
             elif query.icem_status == Status.PENDING and total_seconds > 3600:
                 total_seconds = 3600
             else:
