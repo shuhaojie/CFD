@@ -120,8 +120,11 @@ class StatusComputeFields(ComputeField):
 class TotalTimeComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         query = await Uknow.filter(id=obj.get("id", None)).first()
-        total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
-            tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
+        if not query.create_time:
+            total_seconds = 0
+        else:
+            total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
+                tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
         # 如果有fluent_end, 优先用这个值
         if query.fluent_end:
             total_seconds = (query.fluent_end - query.create_time).total_seconds()
