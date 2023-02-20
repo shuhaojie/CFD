@@ -81,6 +81,8 @@ class FluentLevelComputeFields(ComputeField):
 class StatusComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         query = await Uknow.filter(id=obj.get("id", None)).first()
+        if not query.create_time:
+            return '任务失败'
         total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
             tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
         if query.data_status == 'success':
