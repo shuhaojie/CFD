@@ -78,18 +78,22 @@ async def upload(file: UploadFile,
     if not res['status']:
         return {'code': 200, "message": res['message'], 'task_id': None, 'status': False}
     username = res['data']['username']
-    await Uknow.create(
-        task_id=task_id,
-        md5=md5,
-        username=username,
-        mac_address=mac_address,
-        task_name=task_name,
-        icem_hardware_level=icem_hardware_level,
-        fluent_hardware_level=fluent_hardware_level,
-        fluent_prof=prof,
-        data_status=Status.SUCCESS,
-        order_id=order_id,
-    )
+    try:
+        await Uknow.create(
+            task_id=task_id,
+            md5=md5,
+            username=username,
+            mac_address=mac_address,
+            task_name=task_name,
+            icem_hardware_level=icem_hardware_level,
+            fluent_hardware_level=fluent_hardware_level,
+            fluent_prof=prof,
+            data_status=Status.SUCCESS,
+            order_id=order_id,
+        )
+    except Exception as e:
+        print(e)
+        return {'code': 200, "message": "CFD后台数据库连接中断", 'task_id': None, 'status': False}
     # 7. 对文件重命名
     standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')
     shutil.move(write_path, standard_file)
