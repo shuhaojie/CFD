@@ -28,6 +28,7 @@ async def monitor_task(task_id, celery_task_id):
     api_log.info(f'================Task {task_id} starts===================')
     zip_file_path = os.path.join(monitor_path, task_id + '.zip')
     minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}'
+    result_file = 'fluent_result.zip'
     try:
         # 首先将开始时间做更新
         await Uknow.filter(task_id=task_id).update(
@@ -135,14 +136,14 @@ async def monitor_task(task_id, celery_task_id):
                     api_log.info(f'Fluent job {job_id} state:{state}')
                     if state == 'COMPLETE':
                         api_log.info(f'Fluent job {job_id} finish!!!!')
-                        url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent_result/ensight_result.encas'
+                        url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/{result_file}'
                         file_path = os.path.join(configs.PREPARE_PATH, task_id)
                         download_file(url, file_path, headers)
                         # 等待文件下载完全下载下来
-                        fluent_result_zip = os.path.join(file_path, 'ensight_result.encas')
+                        fluent_result_zip = os.path.join(file_path, result_file)
                         download_complete(fluent_result_zip)
                         # 将文件结果上传到minio
-                        minio.upload_file(f'{task_id}/ensight_result.encas', fluent_result_zip)
+                        minio.upload_file(f'{task_id}/{result_file}', fluent_result_zip)
                         # 更新Uknow, FluentTask表
                         fluent_start, fluent_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                             res['finishedAt']) + timedelta(hours=8)
@@ -152,7 +153,7 @@ async def monitor_task(task_id, celery_task_id):
                             fluent_start=fluent_start,
                             fluent_end=fluent_end,
                             fluent_duration=float((fluent_end - fluent_start).seconds),
-                            fluent_result_file_path=f'{minio_base_url}/ensight_result.encas',
+                            fluent_result_file_path=f'{minio_base_url}/{result_file}',
                         )
                         widget = await task_widget(task_id)
                         await Uknow.filter(task_id=task_id).update(

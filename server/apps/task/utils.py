@@ -467,7 +467,7 @@ async def task_widget(task_id, task_status='SUCCESS'):
     compute_price = icem_price * icem_duration / 3600.0 + fluent_price * fluent_duration / 3600.0
     # 任务成功, 才需要计算下载价格
     if task_status == 'SUCCESS':
-        file_size = os.path.getsize(os.path.join(configs.PREPARE_PATH, task_id, 'ensight_result.encas'))
+        file_size = os.path.getsize(os.path.join(configs.PREPARE_PATH, task_id, 'fluent_result.zip'))
         # 下载价格: 每GB收费0.8246
         download_price = file_size * 0.8246 / (1024.0 * 1024.0 * 1024.0)
         return round(compute_price + storage_price + download_price, 2)
@@ -539,7 +539,7 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     msg['To'] = you
     msg.attach(MIMEText(message))
     if task_status == 'SUCCESS':
-        file_path = os.path.join(configs.ARCHIVE_PATH, task_id, 'ensight_result.encas')
+        file_path = os.path.join(configs.ARCHIVE_PATH, task_id, 'fluent_result.zip')
         part = MIMEBase('application', "octet-stream")
         with open(file_path, 'rb') as file:
             part.set_payload(file.read())
