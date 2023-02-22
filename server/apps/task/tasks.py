@@ -165,9 +165,10 @@ async def monitor_task(task_id, celery_task_id):
                     shutil.move(file_path, configs.ARCHIVE_PATH)
                     # 发送邮件
                     try:
+                        # 有可能会出现网络断开的问题
                         await send_mail(task_id)
                     except Exception as e:
-                        pass
+                        print(e)
                     icem_finish = True
                     fluent_finish = True
                 elif state == 'FAILED':
