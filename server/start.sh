@@ -1,1 +1,1 @@
-celery -A worker.celery worker -l info -c 10 --without-mingle
+celery -A worker.celery worker -l info -c 10 -P gevent
