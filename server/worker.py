@@ -9,10 +9,11 @@ from logs import api_log
 celery = Celery("CFD")
 if configs.ENVIRONMENT == 'local':
     celery.conf.broker_url = f"redis://{configs.REDIS_HOST}/0"
-    celery.conf.result_backend = f"redis://{configs.REDIS_HOST}/0"
+    # celery.conf.result_backend = f"redis://{configs.REDIS_HOST}/0"
 else:
     celery.conf.broker_url = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0"
-    celery.conf.result_backend = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/1"
+    # celery.conf.
+    # celery.conf.result_backend = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/1"
 
 
 @celery.task(name="run_task")

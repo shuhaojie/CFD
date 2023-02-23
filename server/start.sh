@@ -1,1 +1,1 @@
-celery -A worker.celery worker -l info -c 10 -P gevent
+celery -A worker.celery worker -l info -c 10
