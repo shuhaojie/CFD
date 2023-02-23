@@ -107,8 +107,7 @@ async def monitor_task(task_id, celery_task_id):
             fluent_prof_query = await FluentProf.filter(prof_name=uknow_query.fluent_prof).first()
             prof_path = fluent_prof_query.prof_path
             # 移动prof文件并重命名, 这里统一重命名为ICA(因为脚本中是ICA)
-            shutil.copy(f'./static/prof/{prof_path}',
-                        os.path.join(fluent_dst_path, 'ICA_from_ICA_fourier_mass.prof'))
+            shutil.copy(f'./static/prof/{prof_path}', fluent_dst_path)
             # 将jou文件复制到路径下
             shutil.move(os.path.join(zip_to, 'cfd_auto.usf'), fluent_dst_path)
             # 将fluent文件夹进行打包
