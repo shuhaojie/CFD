@@ -25,6 +25,7 @@ monitor_path, prepare_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(co
 async def monitor_task(task_id, celery_task_id):
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
+    print(f'================Task {task_id} starts===================')
     api_log.info(f'================Task {task_id} starts===================')
     zip_file_path = os.path.join(monitor_path, task_id + '.zip')
     minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}'
