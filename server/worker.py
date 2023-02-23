@@ -12,7 +12,7 @@ if configs.ENVIRONMENT == 'local':
     celery.conf.result_backend = f"redis://{configs.REDIS_HOST}/0"
 else:
     celery.conf.broker_url = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0"
-    celery.conf.result_backend = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0"
+    celery.conf.result_backend = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/1"
 
 
 @celery.task(name="run_task")
