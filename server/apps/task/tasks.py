@@ -169,6 +169,7 @@ async def monitor_task(task_id, celery_task_id):
                         await send_mail(task_id)
                     except Exception as e:
                         print(e)
+                        await send_mail(task_id, 'NETWORK')
                     icem_finish = True
                     fluent_finish = True
                 elif state == 'FAILED':
