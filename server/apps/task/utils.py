@@ -523,7 +523,7 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     if task_status == 'SUCCESS':
         if res['data']:
             subject = f'任务{task_id}成功'
-            message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
+            message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n时间:{str(datetime.now())}'
         else:
             subject = f'任务{task_id}成功'
             message = f'注意:该订单的操作人员没有邮箱, 请将结果发给它!\n\n订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
