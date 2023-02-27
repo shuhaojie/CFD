@@ -212,5 +212,5 @@ async def monitor_task(task_id, celery_task_id):
         print(f)
         api_log.error(e)
         from worker import celery as celery_app
-        celery_app.control.revoke(celery_task_id, terminate=True)  # 有报错停掉任务
+        # celery_app.control.revoke(celery_task_id, terminate=True)  # 有报错停掉任务
         time.sleep(3)
