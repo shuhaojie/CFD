@@ -14,6 +14,7 @@ else:
     celery.conf.broker_url = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/0"
     # celery.conf.
     # celery.conf.result_backend = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/1"
+celery.conf.task_ignore_result = True
 
 
 @celery.task(name="run_task")

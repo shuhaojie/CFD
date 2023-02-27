@@ -1,1 +1,1 @@
-celery -A worker.celery worker -l info -c 10 --max-tasks-per-child 200 --prefetch-multiplier 10  --task_ignore_result
+celery -A worker.celery worker -l info -c 10 --max-tasks-per-child 200 --prefetch-multiplier 10
