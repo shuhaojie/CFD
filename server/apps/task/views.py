@@ -101,7 +101,7 @@ async def upload(file: UploadFile,
     total_tasks = get_celery_worker()
     print(f'Total Task:{total_tasks}')
     # 无论worker数有没有超过10个, 都需要将任务发布出去
-    run_task.apply_async((task_id,))
+    run_task.apply_async(args=(task_id,), expires=60)
     if total_tasks < 10:
         await Uknow.filter(task_id=task_id).update(icem_status=Status.PENDING)
         return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
