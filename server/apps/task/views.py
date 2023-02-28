@@ -98,16 +98,16 @@ async def upload(file: UploadFile,
     standard_file = os.path.join(configs.MONITOR_PATH, task_id + '.zip')
     shutil.move(write_path, standard_file)
     # 8. 发送异步任务
-    total_tasks = get_celery_worker()
-    print(f'Total Task:{total_tasks}')
+    # total_tasks = get_celery_worker()
+    # print(f'Total Task:{total_tasks}')
     # 无论worker数有没有超过10个, 都需要将任务发布出去
-    run_task.apply_async(args=(task_id,), expires=60)
-    if total_tasks < 10:
-        await Uknow.filter(task_id=task_id).update(icem_status=Status.PENDING)
-        return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
-    else:
-        await Uknow.filter(task_id=task_id).update(icem_status=Status.QUEUE)
-        return {'code': 200, "message": "文件上传成功, 任务排队中", 'task_id': task_id, 'status': True}
+    run_task.apply_async(args=(task_id,), expires=6000)
+    # if total_tasks < 10:
+    await Uknow.filter(task_id=task_id).update(icem_status=Status.PENDING)
+    return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
+    # else:
+    #     await Uknow.filter(task_id=task_id).update(icem_status=Status.QUEUE)
+    #     return {'code': 200, "message": "文件上传成功, 任务排队中", 'task_id': task_id, 'status': True}
 
 
 @uknow_router.get("/get_status", name="状态查询")
