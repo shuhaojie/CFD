@@ -18,7 +18,6 @@ from apps.task.utils import FileTool, get_token, download_file, upload_file, cre
     reverse_job, download_complete, task_fail, task_widget, send_mail
 from logs import api_log
 from utils.oss import Minio
-from main import app
 
 minio = Minio()
 monitor_path, prepare_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(configs.PREPARE_PATH)
