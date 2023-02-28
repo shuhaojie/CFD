@@ -111,14 +111,14 @@ app = create_app()
 
 
 # 自定义异常
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(exc: RequestValidationError):
-    return JSONResponse(status_code=status.HTTP_200_OK,
-                        content=jsonable_encoder({"status": False,
-                                                  "code": 412,
-                                                  "message": "提交数据异常",
-                                                  "data": exc.errors()}),
-                        )
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(exc: RequestValidationError):
+#     return JSONResponse(status_code=status.HTTP_200_OK,
+#                         content=jsonable_encoder({"status": False,
+#                                                   "code": 412,
+#                                                   "message": "提交数据异常",
+#                                                   "data": exc.errors()}),
+#                         )
 
 
 if __name__ == '__main__':
