@@ -45,6 +45,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
             icem_status=Status.PENDING,
             data_status=Status.SUCCESS,
             order_id=order_id,
+            create_time=datetime.now(),
         )
         uknow_query = await Uknow.filter(task_id=task_id).first()
 
