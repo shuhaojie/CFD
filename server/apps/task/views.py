@@ -17,6 +17,7 @@ from celery_utils import get_celery_worker, get_all_worker
 from config import configs
 from utils.constant import Status
 from logs import api_log
+import asyncio
 
 uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 
@@ -113,7 +114,8 @@ async def upload(file: UploadFile,
     # print(f'Total Task:{total_tasks}')
     # 无论worker数有没有超过10个, 都需要将任务发布出去
     # run_task.apply_async(args=(task_id,), expires=6000)
-    background_tasks.add_task(monitor_task, task_id)
+    # background_tasks.add_task(monitor_task, task_id)
+    asyncio.create_task(monitor_task(task_id))
     # printus(result)
     # if total_tasks < 10:
     await Uknow.filter(task_id=task_id).update(icem_status=Status.PENDING)
