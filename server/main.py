@@ -2,14 +2,9 @@ import os
 import uvicorn
 import redis.asyncio as redis
 from fastapi import FastAPI
-from fastapi import status
-from fastapi.encoders import jsonable_encoder
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 from fastapi_admin.app import app as admin_app
 from starlette.staticfiles import StaticFiles
 from starlette.responses import RedirectResponse
-
 from dbs.database import db_init
 from logs import log_init, api_log
 from middleware import middleware_init
@@ -122,7 +117,7 @@ app = create_app()
 
 
 if __name__ == '__main__':
-    uvicorn.run(app='main:app', host='0.0.0.0', port=8000, workers=10, debug=True, reload=True)
+    uvicorn.run(app='main:app', host='0.0.0.0', port=8000, workers=20, debug=True, reload=True)
 
     errors = [{'loc': ('body', 'name'), 'msg': 'field required', 'type': 'value_error.missing'},
               {'loc': ('body', 'picture'), 'msg': 'field required', 'type': 'value_error.missing'}]
