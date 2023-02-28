@@ -10,6 +10,8 @@ from fastapi_admin.app import app
 from fastapi_admin.file_upload import FileUpload
 from fastapi_admin.resources import Action, Field, Dropdown, Model, ToolbarAction, ComputeField
 from fastapi_admin.widgets import filters, inputs
+from tortoise import Tortoise
+from dbs.database import TORTOISE_ORM
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 upload = FileUpload(uploads_dir=os.path.join(BASE_DIR, "static", "uploads"))
@@ -21,6 +23,8 @@ class SystemComputeFields(ComputeField):
     """
 
     async def get_value(self, request: Request, obj: dict):
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
         system_query = await Uknow.filter(id=obj.get("id", None)).first()
         if system_query:
             return system_query.task_id
@@ -34,6 +38,8 @@ class DateTimeComputeFields(ComputeField):
     """
 
     async def get_value(self, request: Request, obj: dict):
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
         system_query = await Uknow.filter(id=obj.get("id", None)).first()
         if system_query.create_time:
             return system_query.create_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -47,6 +53,8 @@ class IcemLevelComputeFields(ComputeField):
     """
 
     async def get_value(self, request: Request, obj: dict):
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
         query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.icem_hardware_level == 'low':
             return '低'
@@ -62,6 +70,8 @@ class FluentLevelComputeFields(ComputeField):
     """
 
     async def get_value(self, request: Request, obj: dict):
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
         query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.fluent_hardware_level == 'low':
             fluent = '低'
@@ -80,6 +90,8 @@ class FluentLevelComputeFields(ComputeField):
 
 class StatusComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
         query = await Uknow.filter(id=obj.get("id", None)).first()
         if not query.create_time and query.icem_status == Status.QUEUE:
             return '任务排队中'
@@ -121,6 +133,8 @@ class StatusComputeFields(ComputeField):
 
 class TotalTimeComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
         query = await Uknow.filter(id=obj.get("id", None)).first()
         if not query.create_time:
             total_seconds = 0
@@ -154,6 +168,8 @@ class TotalTimeComputeFields(ComputeField):
 
 class LogFileComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
         query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.fluent_result_file_path:
             return query.fluent_result_file_path
@@ -165,6 +181,8 @@ class LogFileComputeFields(ComputeField):
 
 class WidgetComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
         query = await Uknow.filter(id=obj.get("id", None)).first()
         if query.widgets:
             return f'{query.widgets}元'
