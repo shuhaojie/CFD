@@ -1,8 +1,10 @@
 from tortoise.contrib.fastapi import register_tortoise
 from config import configs
+from tortoise import Tortoise
 
 TORTOISE_ORM = {
-    "connections": {"default": f"mysql://{configs.MYSQL_USER}:{configs.MYSQL_PASSWORD}@{configs.MYSQL_SERVER}:{configs.MYSQL_PORT}/{configs.MYSQL_DB}"},
+    "connections": {
+        "default": f"mysql://{configs.MYSQL_USER}:{configs.MYSQL_PASSWORD}@{configs.MYSQL_SERVER}:{configs.MYSQL_PORT}/{configs.MYSQL_DB}"},
     "apps": {
         "models": {
             "models": ["apps.models", "aerich.models"],
@@ -21,6 +23,15 @@ def db_init(app):
         config=TORTOISE_ORM,
         generate_schemas=True,
         add_exception_handlers=True,
+    )
+
+
+async def database_init():
+    await Tortoise.init(
+        # 指定mysql信息
+        db_url=f"mysql://{configs.MYSQL_USER}:{configs.MYSQL_PASSWORD}@{configs.MYSQL_SERVER}:{configs.MYSQL_PORT}/{configs.MYSQL_DB}",
+        # 指定models
+        modules={'models': ['apps.models']}
     )
 
 

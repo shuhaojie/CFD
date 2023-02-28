@@ -12,12 +12,13 @@ from datetime import datetime, timedelta
 
 from config import configs
 from apps.models import Uknow, FluentProf
-from dbs.database import TORTOISE_ORM
+from dbs.database import TORTOISE_ORM, database_init
 from utils.constant import Status
 from apps.task.utils import FileTool, get_token, download_file, upload_file, create_job, create_remote_folder, \
     reverse_job, download_complete, task_fail, task_widget, send_mail
 from logs import api_log
 from utils.oss import Minio
+from main import app
 
 minio = Minio()
 monitor_path, prepare_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(configs.PREPARE_PATH)
@@ -103,12 +104,14 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 # 采用速石传回来的 任务开始/任务结束 时间, 方便后续计算费用
                 icem_start, icem_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                     res['finishedAt']) + timedelta(hours=8)
+                await database_init()
                 await Uknow.filter(task_id=task_id).update(
                     icem_status=Status.SUCCESS,
                     icem_start=icem_start,  # 用速石返回的时间, 计算的费用才是准确的
                     icem_end=icem_end,
                     icem_duration=float((icem_end - icem_start).seconds),
                 )
+                await Tortoise.close_connections()
                 url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
                 fluent_dst_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
                 FileTool.make_directory(fluent_dst_path)
@@ -136,10 +139,12 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 r = create_job(task_id, 'fluent', fluent_md5, headers, uknow_query.fluent_hardware_level)
                 job_id = r.json()['id']
                 fluent_start = datetime.now()
+                await database_init()
                 await Uknow.filter(task_id=task_id).update(
                     fluent_status=Status.PENDING,
                     fluent_start=fluent_start
                 )
+                await Tortoise.close_connections()
                 # 对任务状态进行轮询
                 fluent_finish = False
                 while not fluent_finish:
@@ -162,6 +167,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                         fluent_start, fluent_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                             res['finishedAt']) + timedelta(hours=8)
                         # 先更新一下数据, 不然计算费用的时候查不出
+                        await database_init()
                         await Uknow.filter(task_id=task_id).update(
                             fluent_status=Status.SUCCESS,
                             fluent_start=fluent_start,
@@ -169,10 +175,13 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                             fluent_duration=float((fluent_end - fluent_start).seconds),
                             fluent_result_file_path=f'{minio_base_url}/{result_file}',
                         )
+                        await Tortoise.close_connections()
                         widget = await task_widget(task_id)
+                        await database_init()
                         await Uknow.filter(task_id=task_id).update(
                             widgets=widget,
                         )
+                        await Tortoise.close_connections()
                         # 将文件夹移动到archive下进行归档
                         archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
                         if os.path.isdir(archive_path):
@@ -191,13 +200,17 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                         task_fail(task_id, job_id, headers)
                         # 更新状态
                         fluent_end = datetime.now()
+                        await database_init()
                         await Uknow.filter(task_id=task_id).update(
                             fluent_status=Status.FAIL,
                             fluent_end=fluent_end,
                             fluent_log_file_path=f'{minio_base_url}/stderr.txt',
                         )
+                        await Tortoise.close_connections()
                         widget = await task_widget(task_id, task_status='FAIL')
+                        await database_init()
                         await Uknow.filter(task_id=task_id).update(widgets=widget)
+                        await Tortoise.close_connections()
                         await send_mail(task_id, task_status='FAIL', job_id=job_id)
                         icem_finish = True
                         fluent_finish = True
@@ -207,11 +220,13 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 task_fail(task_id, job_id, headers)
                 # 更新状态
                 icem_end = datetime.now()
+                await database_init()
                 await Uknow.filter(task_id=task_id).update(
                     icem_status=Status.FAIL,
                     icem_end=icem_end,
                     icem_log_file_path=f'{minio_base_url}/stderr.txt',
                 )
+                await Tortoise.close_connections()
                 widget = await task_widget(task_id, task_status='FAIL')
                 await Uknow.filter(task_id=task_id).update(widgets=widget)
                 # 结束循环
