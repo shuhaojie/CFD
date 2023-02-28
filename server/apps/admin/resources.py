@@ -11,7 +11,7 @@ from fastapi_admin.file_upload import FileUpload
 from fastapi_admin.resources import Action, Field, Dropdown, Model, ToolbarAction, ComputeField
 from fastapi_admin.widgets import filters, inputs
 from tortoise import Tortoise
-from dbs.database import TORTOISE_ORM
+from dbs.database import TORTOISE_ORM, database_init
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 upload = FileUpload(uploads_dir=os.path.join(BASE_DIR, "static", "uploads"))
@@ -25,7 +25,9 @@ class SystemComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
+        await database_init()
         system_query = await Uknow.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         if system_query:
             return system_query.task_id
         else:
@@ -40,7 +42,9 @@ class DateTimeComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
+        await database_init()
         system_query = await Uknow.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         if system_query.create_time:
             return system_query.create_time.strftime("%Y-%m-%d %H:%M:%S")
         else:
@@ -55,7 +59,9 @@ class IcemLevelComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
+        await database_init()
         query = await Uknow.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         if query.icem_hardware_level == 'low':
             return '低'
         elif query.icem_hardware_level == 'medium':
@@ -72,7 +78,9 @@ class FluentLevelComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
+        await database_init()
         query = await Uknow.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         if query.fluent_hardware_level == 'low':
             fluent = '低'
         elif query.fluent_hardware_level == 'medium':
@@ -92,7 +100,9 @@ class StatusComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
+        await database_init()
         query = await Uknow.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         if not query.create_time and query.icem_status == Status.QUEUE:
             return '任务排队中'
         if not query.create_time:
@@ -135,7 +145,9 @@ class TotalTimeComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
+        await database_init()
         query = await Uknow.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         if not query.create_time:
             total_seconds = 0
         else:
@@ -170,7 +182,9 @@ class LogFileComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
+        await database_init()
         query = await Uknow.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         if query.fluent_result_file_path:
             return query.fluent_result_file_path
         if query.icem_log_file_path:
@@ -183,7 +197,9 @@ class WidgetComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
+        await database_init()
         query = await Uknow.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         if query.widgets:
             return f'{query.widgets}元'
         else:
@@ -236,7 +252,9 @@ class UknowResource(Model):
 
 class FrequencyComputeFields(ComputeField):
     async def get_value(self, request: Request, obj: dict):
+        await database_init()
         query = await FluentHardware.filter(id=obj.get("id", None)).first()
+        await Tortoise.close_connections()
         return f'{query.cpu_frequency}GHz'
 
 
