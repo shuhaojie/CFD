@@ -20,12 +20,10 @@ celery.conf.timezone = 'Asia/Shanghai'
 celery.conf.broker_heartbeat = 0
 
 
-@celery.task(name="run_task")
 def run_task(task_id):
     try:
-        celery_task_id = run_task.request.id
         loop = asyncio.get_event_loop()
-        future = loop.create_task(monitor_task(task_id, celery_task_id))
+        future = loop.create_task(monitor_task(task_id))
         loop.run_until_complete(asyncio.wait([future]))
         future.result()
     except Exception as e:
