@@ -15,8 +15,9 @@ else:
     # celery.conf.
     # celery.conf.result_backend = f"redis://:{configs.REDIS_PASSWD}@{configs.REDIS_HOST}/1"
 celery.conf.task_ignore_result = True
-celery.conf.enable_utc = True
+celery.conf.enable_utc = False
 celery.conf.timezone = 'Asia/Shanghai'
+celery.conf.broker_heartbeat = 0
 
 
 @celery.task(name="run_task")
