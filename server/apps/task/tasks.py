@@ -42,6 +42,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
             icem_hardware_level=icem_hardware_level,
             fluent_hardware_level=fluent_hardware_level,
             fluent_prof=prof,
+            icem_status=Status.PENDING,
             data_status=Status.SUCCESS,
             order_id=order_id,
         )
