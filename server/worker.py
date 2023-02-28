@@ -22,8 +22,7 @@ celery.conf.broker_heartbeat = 0
 
 def run_task(task_id):
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        loop = asyncio.get_event_loop()
         future = loop.create_task(monitor_task(task_id))
         loop.run_until_complete(asyncio.wait([future]))
         future.result()
