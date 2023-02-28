@@ -4,6 +4,7 @@
 """
 import os
 import time
+import asyncio
 import shutil
 from tortoise import Tortoise
 from dateutil.parser import parse
@@ -22,7 +23,8 @@ minio = Minio()
 monitor_path, prepare_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(configs.PREPARE_PATH)
 
 
-async def monitor_task(task_id):
+async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level, fluent_hardware_level,
+                       prof, order_id):
     print(f'================Task {task_id} starts===================')
     api_log.info(f'================Task {task_id} starts===================')
     try:
@@ -32,10 +34,16 @@ async def monitor_task(task_id):
         minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}'
         result_file = 'fluent_result.zip'
         # 首先将开始时间做更新
-        await Uknow.filter(task_id=task_id).update(
-            icem_start=datetime.now(),
-            create_time=datetime.now(),
-            icem_status=Status.PENDING,
+        await Uknow.create(
+            task_id=task_id,
+            md5=md5,
+            username=username,
+            mac_address=mac_address,
+            icem_hardware_level=icem_hardware_level,
+            fluent_hardware_level=fluent_hardware_level,
+            fluent_prof=prof,
+            data_status=Status.SUCCESS,
+            order_id=order_id,
         )
         uknow_query = await Uknow.filter(task_id=task_id).first()
 
@@ -86,8 +94,10 @@ async def monitor_task(task_id):
             res = reverse_job(job_id, headers)
             state = res['state']
             api_log.info(f'Icem job {job_id} state:{state}')
+            print(f'Icem job {job_id} state:{state}')
             if state == 'COMPLETE':
                 api_log.info(f'Icem job {job_id} finish!!!!')
+                print(f'Icem job {job_id} finish!!!!')
                 # 采用速石传回来的 任务开始/任务结束 时间, 方便后续计算费用
                 icem_start, icem_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                     res['finishedAt']) + timedelta(hours=8)
@@ -134,8 +144,10 @@ async def monitor_task(task_id):
                     res = reverse_job(job_id, headers)
                     state = res['state']
                     api_log.info(f'Fluent job {job_id} state:{state}')
+                    print(f'Fluent job {job_id} state:{state}')
                     if state == 'COMPLETE':
                         api_log.info(f'Fluent job {job_id} finish!!!!')
+                        print(f'Fluent job {job_id} finish!!!!')
                         url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/{result_file}'
                         file_path = os.path.join(configs.PREPARE_PATH, task_id)
                         download_file(url, file_path, headers)
@@ -188,7 +200,7 @@ async def monitor_task(task_id):
                         icem_finish = True
                         fluent_finish = True
                     else:
-                        time.sleep(5)
+                        await asyncio.sleep(5)
             elif state == 'FAILED':
                 task_fail(task_id, job_id, headers)
                 # 更新状态
@@ -205,11 +217,10 @@ async def monitor_task(task_id):
                 icem_finish = True
             else:
                 # 如果任务既没有成功, 也没有失败, 那么就休眠5秒后再轮询
-                time.sleep(5)
+                await asyncio.sleep(5)
     except Exception as e:
         import traceback
         f = traceback.format_exc()
         print(f)
         api_log.error(e)
-        from worker import celery as celery_app
-        time.sleep(3)
+        await asyncio.sleep(5)

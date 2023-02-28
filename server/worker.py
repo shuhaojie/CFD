@@ -20,15 +20,11 @@ celery.conf.timezone = 'Asia/Shanghai'
 celery.conf.broker_heartbeat = 0
 
 
-def run_task(task_id):
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError as e:
-        if str(e).startswith('There is no current event loop in thread'):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        else:
-            raise
-    future = loop.create_task(monitor_task(task_id))
+def run_task(task_id, md5, username, mac_address, icem_hardware_level, fluent_hardware_level,
+             prof, order_id):
+    loop = asyncio.new_event_loop()
+    future = loop.create_task(
+        monitor_task(task_id, md5, username, mac_address, icem_hardware_level, fluent_hardware_level,
+                     prof, order_id))
     loop.run_until_complete(asyncio.wait([future]))
     future.result()

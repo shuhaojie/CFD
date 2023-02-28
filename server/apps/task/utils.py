@@ -28,7 +28,8 @@ from config import configs
 from utils.oss import Minio
 from utils.constant import BUSINESS, Status
 from apps.models import Token, Uknow, IcemHardware, FluentHardware
-
+from tortoise import Tortoise
+from dbs.database import TORTOISE_ORM
 minio = Minio()
 
 
@@ -321,6 +322,8 @@ def generate_token():
 
 async def get_token():
     # 判断token是否存在
+    await Tortoise.init(config=TORTOISE_ORM)
+    await Tortoise.generate_schemas()
     query = await Token.filter().first()
     if query:
         # 如果存在, 先判断token是否过期
@@ -450,6 +453,8 @@ def reverse_job(job_id, headers):
 
 
 async def task_widget(task_id, task_status='SUCCESS'):
+    await Tortoise.init(config=TORTOISE_ORM)
+    await Tortoise.generate_schemas()
     query = await Uknow.filter(task_id=task_id).first()
     icem_start, icem_end, icem_level = query.icem_start, query.icem_end, query.icem_hardware_level
     fluent_start, fluent_end, fluent_level = query.fluent_start, query.fluent_end, query.fluent_hardware_level
@@ -493,6 +498,8 @@ def task_fail(task_id, job_id, headers):
 
 
 async def send_mail(task_id, task_status='SUCCESS', job_id=None):
+    await Tortoise.init(config=TORTOISE_ORM)
+    await Tortoise.generate_schemas()
     query = await Uknow.filter(task_id=task_id).first()
     order_id = query.order_id
     res = get_user_info(order_id)
