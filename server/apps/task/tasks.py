@@ -34,6 +34,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
         minio_base_url = f'http://{configs.MINIO_END}:{configs.MINIO_PORT}/{configs.MINIO_BUCKET}/{task_id}'
         result_file = 'fluent_result.zip'
         # 首先将开始时间做更新
+        await database_init()
         await Uknow.create(
             task_id=task_id,
             md5=md5,
@@ -47,8 +48,10 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
             order_id=order_id,
             create_time=datetime.now(),
         )
+        await Tortoise.close_connections()
+        await database_init()
         uknow_query = await Uknow.filter(task_id=task_id).first()
-
+        await Tortoise.close_connections()
         # 等待文件写入稳定
         FileTool.write_complete(zip_file_path)
 
@@ -120,7 +123,9 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 fluent_msh_file = os.path.join(fluent_dst_path, 'fluent.msh')
                 download_complete(fluent_msh_file)
                 # 将prof文件复制到文件夹中, 具体要根据用户的选择
+                await database_init()
                 fluent_prof_query = await FluentProf.filter(prof_name=uknow_query.fluent_prof).first()
+                await Tortoise.close_connections()
                 prof_path = fluent_prof_query.prof_path
                 # 移动prof文件并重命名, 这里统一重命名为ICA(因为脚本中是ICA)
                 shutil.copy(f'./static/prof/{prof_path}', fluent_dst_path)
@@ -227,7 +232,9 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 )
                 await Tortoise.close_connections()
                 widget = await task_widget(task_id, task_status='FAIL')
+                await database_init()
                 await Uknow.filter(task_id=task_id).update(widgets=widget)
+                await Tortoise.close_connections()
                 # 结束循环
                 await send_mail(task_id, task_status='FAIL', job_id=job_id)
                 icem_finish = True

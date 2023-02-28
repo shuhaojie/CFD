@@ -29,7 +29,7 @@ from utils.oss import Minio
 from utils.constant import BUSINESS, Status
 from apps.models import Token, Uknow, IcemHardware, FluentHardware
 from tortoise import Tortoise
-from dbs.database import TORTOISE_ORM
+from dbs.database import TORTOISE_ORM, database_init
 minio = Minio()
 
 
@@ -324,7 +324,9 @@ async def get_token():
     # 判断token是否存在
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
+    await database_init()
     query = await Token.filter().first()
+    await Tortoise.close_connections()
     if query:
         # 如果存在, 先判断token是否过期
         expire_time = query.expire_time
@@ -338,14 +340,18 @@ async def get_token():
             token = generate_token()
             # 获得完token之后，更新一下数据库
             expire_time = datetime.now() + timedelta(hours=10)
+            await database_init()
             await Token.filter().update(access_token=token, expire_time=expire_time)
+            await Tortoise.close_connections()
             return token
     else:
         # token不存在，也需要获取一下token
         token = generate_token()
         # 获得完token之後，将token入库
         expire_time = datetime.now() + timedelta(hours=10)
+        await database_init()
         await Token.create(access_token=token, expire_time=expire_time)
+        await Tortoise.close_connections()
         return token
 
 
@@ -455,7 +461,9 @@ def reverse_job(job_id, headers):
 async def task_widget(task_id, task_status='SUCCESS'):
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
+    await database_init()
     query = await Uknow.filter(task_id=task_id).first()
+    await Tortoise.close_connections()
     icem_start, icem_end, icem_level = query.icem_start, query.icem_end, query.icem_hardware_level
     fluent_start, fluent_end, fluent_level = query.fluent_start, query.fluent_end, query.fluent_hardware_level
     if fluent_start is None:
@@ -463,8 +471,12 @@ async def task_widget(task_id, task_status='SUCCESS'):
     else:
         fluent_duration = (fluent_end - fluent_start).total_seconds()
     icem_duration = (icem_end - icem_start).total_seconds()
+    await database_init()
     icem_query = await IcemHardware.filter(level=icem_level).first()
+    await Tortoise.close_connections()
+    await database_init()
     fluent_query = await FluentHardware.filter(level=fluent_level).first()
+    await Tortoise.close_connections()
     icem_price, fluent_price = icem_query.price, fluent_query.price
     # 存储价格: 时间换算成小时, 乘以单价0.508, 再乘以150G, 除以每个月720个小时
     storage_price = ((icem_duration + fluent_duration) / 3600.0) * 0.508 * 150 / 720
@@ -500,7 +512,9 @@ def task_fail(task_id, job_id, headers):
 async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas()
+    await database_init()
     query = await Uknow.filter(task_id=task_id).first()
+    await Tortoise.close_connections()
     order_id = query.order_id
     res = get_user_info(order_id)
     # 如果找不到数据, 就只发admin一个人

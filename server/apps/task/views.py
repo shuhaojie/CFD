@@ -8,6 +8,8 @@ from fastapi_restful.inferring_router import InferringRouter
 from pydantic.typing import Literal
 from typing import List
 from fastapi import Query, BackgroundTasks
+from dbs.database import TORTOISE_ORM, database_init
+from tortoise import Tortoise
 from apps.models import Uknow
 from .utils import FileTool, get_user_info
 from .schemas import UploadResponse
@@ -63,7 +65,9 @@ async def upload(file: UploadFile,
 
 @uknow_router.get("/get_status", name="状态查询")
 async def get_status(task_id_list: List[str] = Query([], title="task_id列表")):
+    await database_init()
     all_task_id_list = await Uknow.all().values_list("task_id", flat=True)
+    await Tortoise.close_connections()
     if len(task_id_list) == 0:
         return {'code': 200, "message": "请输入task_id", 'status': False}
     elif not set(task_id_list).issubset(set(all_task_id_list)):
@@ -72,7 +76,9 @@ async def get_status(task_id_list: List[str] = Query([], title="task_id列表"))
         item_list = []
         for task_id in task_id_list:
             item_dict = {}
+            await database_init()
             query = await Uknow.filter(task_id=task_id).first()
+            await Tortoise.close_connections()
             item_dict['任务id'] = task_id
             item_dict['任务名称'] = query.task_name if query.task_name else '-'
             item_dict['用户名'] = query.username if query.username else '-'
