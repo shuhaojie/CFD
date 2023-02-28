@@ -20,6 +20,15 @@ from logs import api_log
 uknow_router = InferringRouter(prefix="", tags=['UKnow'])
 
 
+def printus(result):
+    print(result)  # task id
+    print(result.ready())  # returns True if the task has finished processing.
+    print(result.result)  # task is not ready, so no return value yet.
+    print(result.get())  # Waits until the task is done and returns the retval.
+    print(result.result)  # direct access to result, doesn't re-raise errors.
+    print(result.successful())  # returns True if the task didn't end in failure.)
+
+
 # https://stackoverflow.com/a/70657621/10844937
 @uknow_router.post("/upload", name="上传文件", response_model=UploadResponse)
 async def upload(file: UploadFile,
@@ -101,7 +110,8 @@ async def upload(file: UploadFile,
     # total_tasks = get_celery_worker()
     # print(f'Total Task:{total_tasks}')
     # 无论worker数有没有超过10个, 都需要将任务发布出去
-    run_task.apply_async(args=(task_id,), expires=6000)
+    result = run_task.apply_async(args=(task_id,), expires=6000)
+    printus(result)
     # if total_tasks < 10:
     await Uknow.filter(task_id=task_id).update(icem_status=Status.PENDING)
     return {'code': 200, "message": "文件上传成功, 任务即将开始", 'task_id': task_id, 'status': True}
