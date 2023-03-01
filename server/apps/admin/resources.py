@@ -34,21 +34,21 @@ upload = FileUpload(uploads_dir=os.path.join(BASE_DIR, "static", "uploads"))
 #             return
 
 
-class DateTimeComputeFields(ComputeField):
-    """
-    Radio类型返回字段展示
-    """
-
-    async def get_value(self, request: Request, obj: dict):
-        await Tortoise.init(config=TORTOISE_ORM)
-        await Tortoise.generate_schemas()
-        await database_init()
-        system_query = await Uknow.filter(id=obj.get("id", None)).first()
-        await Tortoise.close_connections()
-        if system_query.create_time:
-            return system_query.create_time.strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            return '-'
+# class DateTimeComputeFields(ComputeField):
+#     """
+#     Radio类型返回字段展示
+#     """
+#
+#     async def get_value(self, request: Request, obj: dict):
+#         await Tortoise.init(config=TORTOISE_ORM)
+#         await Tortoise.generate_schemas()
+#         await database_init()
+#         system_query = await Uknow.filter(id=obj.get("id", None)).first()
+#         await Tortoise.close_connections()
+#         if system_query.create_time:
+#             return system_query.create_time.strftime("%Y-%m-%d %H:%M:%S")
+#         else:
+#             return '-'
 
 
 # class IcemLevelComputeFields(ComputeField):
