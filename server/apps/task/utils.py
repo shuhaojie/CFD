@@ -421,7 +421,7 @@ def download_file(url, dest_folder, headers):
         return False
 
 
-def download_complete(file_path):
+async def download_complete(file_path):
     try:
         is_download_complete = False
         while not is_download_complete:

@@ -122,7 +122,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 download_file(url, fluent_dst_path, headers)
                 # 等待文件下载完全下载下来
                 fluent_msh_file = os.path.join(fluent_dst_path, 'fluent.msh')
-                download_complete(fluent_msh_file)
+                await download_complete(fluent_msh_file)
                 api_log.info(f'{task_id} fluent msh download success.')
                 # 将prof文件复制到文件夹中, 具体要根据用户的选择
                 await database_init()
@@ -166,7 +166,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                         download_file(url, file_path, headers)
                         # 等待文件下载完全下载下来
                         fluent_result_zip = os.path.join(file_path, result_file)
-                        download_complete(fluent_result_zip)
+                        await download_complete(fluent_result_zip)
                         # 将文件结果上传到minio
                         minio.upload_file(f'{task_id}/{result_file}', fluent_result_zip)
                         # 更新Uknow, FluentTask表
