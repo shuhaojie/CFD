@@ -8,8 +8,9 @@ from fastapi_restful.inferring_router import InferringRouter
 from pydantic.typing import Literal
 from typing import List
 from fastapi import Query, BackgroundTasks
-from dbs.database import TORTOISE_ORM, database_init
+from dbs.database import database_init
 from tortoise import Tortoise
+from tortoise.models import Q
 from apps.models import Uknow
 from .utils import FileTool, get_user_info
 from .schemas import UploadResponse
@@ -51,7 +52,15 @@ async def upload(file: UploadFile,
     if not file.filename.endswith('zip'):
         return {'code': 200, "message": "请上传zip文件", "task_id": None, "status": False}
     task_id = str(uuid.uuid1())
-    # 6. 数据入库
+    # 4. 判断order_id是否正在跑或者排队
+    await database_init()
+    query = await Uknow.filter(
+        Q(order_id=order_id, icem_status=Status.QUEUE) | Q(order_id=order_id, icem_status=Status.PENDING) | Q(
+            order_id=order_id, fluent_status=Status.QUEUE) | Q(order_id=order_id, fluent_status=Status.PENDING)).first()
+    await Tortoise.close_connections()
+    if query:
+        return {'code': 200, "message": "该订单id正在处理中", "task_id": None, "status": False}
+    # 5. 读取用户信息
     res = get_user_info(order_id)
     if not res['status']:
         return {'code': 200, "message": res['message'], 'task_id': None, 'status': False}
