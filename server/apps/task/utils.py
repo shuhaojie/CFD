@@ -314,11 +314,14 @@ class FileTool:
 def delete_folder(task_id):
     prepare_folder = os.path.join(configs.PREPARE_PATH, task_id)
     monitor_folder = os.path.join(configs.MONITOR_PATH, task_id)
+    monitor_zip = os.path.join(configs.MONITOR_PATH, task_id+'.zip')
     archive_folder = os.path.join(configs.ARCHIVE_PATH, task_id)
     if os.path.exists(prepare_folder):
         shutil.rmtree(prepare_folder)
     if os.path.exists(monitor_folder):
         shutil.rmtree(monitor_folder)
+    if os.path.exists(monitor_zip):
+        os.remove(monitor_zip)
     if os.path.exists(archive_folder):
         shutil.rmtree(archive_folder)
 
