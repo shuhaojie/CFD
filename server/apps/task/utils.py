@@ -563,7 +563,7 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
         message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n时间:{str(datetime.now())}'
     elif task_status == 'NETWORK':
         subject = f'任务{task_id}成功'
-        message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n下载地址:{result}时间:{str(datetime.now())}'
+        message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n时间:{str(datetime.now())}\n\n下载地址:{result}'
     else:
         subject = f'任务{task_id}失败'
         if job_id is not None:
