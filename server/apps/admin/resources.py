@@ -225,12 +225,12 @@ class UknowResource(Model):
     fields = [
         Field(name="order_id", label="订单id", input_=inputs.DisplayOnly()),
         Field(name="username", label="操作人员", input_=inputs.DisplayOnly()),
-        DateTimeComputeFields(name="create_time", label="创建时间", input_=inputs.DisplayOnly()),
+        Field(name="create_time", label="创建时间", input_=inputs.DisplayOnly()),
         StatusComputeFields(name="data_status", label="任务状态", input_=inputs.DisplayOnly()),
         # TotalTimeComputeFields(name="fluent_duration", label="任务耗时", input_=inputs.DisplayOnly()),
         # WidgetComputeFields(name="widgets", label="任务花费", input_=inputs.DisplayOnly()),
-        Field(name="fluent_prof", label="prof", input_=inputs.DisplayOnly()),
-        LogFileComputeFields(name="fluent_result_file_path", label="结果文件", input_=inputs.DisplayOnly()),
+        # Field(name="fluent_prof", label="prof", input_=inputs.DisplayOnly()),
+        LogFileComputeFields(name="fluent_result_file_path", label="CFD结果", input_=inputs.DisplayOnly()),
     ]
 
     async def get_toolbar_actions(self, request: Request) -> List[ToolbarAction]:
