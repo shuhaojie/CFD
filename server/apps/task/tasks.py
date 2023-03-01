@@ -54,7 +54,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
         uknow_query = await Uknow.filter(task_id=task_id).first()
         await Tortoise.close_connections()
         # 等待文件写入稳定
-        FileTool.write_complete(zip_file_path)
+        # FileTool.write_complete(zip_file_path)
 
         # 新建Icem文件夹
         icem_dst_path = os.path.join(prepare_path, task_id, 'icem')
@@ -81,7 +81,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
         headers = {'Authorization': f'Bearer {token}'}
 
         # 等待icem zip文件写入稳定
-        FileTool.write_complete(icem_zip_file)
+        # FileTool.write_complete(icem_zip_file)
 
         # 在速石上新建以task_id为名称的文件夹
         create_remote_folder(task_id, headers)
