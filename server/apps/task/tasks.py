@@ -3,7 +3,7 @@
 本脚本会一直对receive路径下的文件进行不间断扫描, 有文件过来时会对文件进行判断，如果文件通过验证, 会将文件移入到release下
 """
 import os
-import time
+import traceback
 import asyncio
 import shutil
 from tortoise import Tortoise
@@ -25,7 +25,7 @@ monitor_path, prepare_path = r"{}".format(configs.MONITOR_PATH), r"{}".format(co
 
 async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level, fluent_hardware_level,
                        prof, order_id):
-    print(f'================Task {task_id} starts===================')
+    print(f'================时间:{str(datetime.now())}Task {task_id} starts===================')
     api_log.info(f'================Task {task_id} starts===================')
     try:
         await Tortoise.init(config=TORTOISE_ORM)
@@ -100,10 +100,10 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
             res = reverse_job(job_id, headers)
             state = res['state']
             api_log.info(f'Icem job {job_id} state:{state}')
-            print(f'Icem job {job_id} state:{state}')
+            print(f'时间:{str(datetime.now())}Icem job {job_id} state:{state}')
             if state == 'COMPLETE':
                 api_log.info(f'Icem job {job_id} finish!!!!')
-                print(f'Icem job {job_id} finish!!!!')
+                print(f'时间:{str(datetime.now())}Icem job {job_id} finish!!!!')
                 # 采用速石传回来的 任务开始/任务结束 时间, 方便后续计算费用
                 icem_start, icem_end = parse(res['createdAt']) + timedelta(hours=8), parse(
                     res['finishedAt']) + timedelta(hours=8)
@@ -123,6 +123,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 # 等待文件下载完全下载下来
                 fluent_msh_file = os.path.join(fluent_dst_path, 'fluent.msh')
                 download_complete(fluent_msh_file)
+                api_log.info(f'{task_id} fluent msh download success.')
                 # 将prof文件复制到文件夹中, 具体要根据用户的选择
                 await database_init()
                 fluent_prof_query = await FluentProf.filter(prof_name=uknow_query.fluent_prof).first()
@@ -156,10 +157,10 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                     res = reverse_job(job_id, headers)
                     state = res['state']
                     api_log.info(f'Fluent job {job_id} state:{state}')
-                    print(f'Fluent job {job_id} state:{state}')
+                    print(f'时间:{str(datetime.now())} Fluent job {job_id} state:{state}')
                     if state == 'COMPLETE':
                         api_log.info(f'Fluent job {job_id} finish!!!!')
-                        print(f'Fluent job {job_id} finish!!!!')
+                        print(f'时间:{str(datetime.now())} Fluent job {job_id} finish!!!!')
                         url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/{result_file}'
                         file_path = os.path.join(configs.PREPARE_PATH, task_id)
                         download_file(url, file_path, headers)
@@ -187,15 +188,17 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                             widgets=widget,
                         )
                         await Tortoise.close_connections()
-                        # 将对应的文件夹都删掉
-                        delete_folder(task_id)
                         # 发送邮件
                         try:
                             # 有可能会出现网络断开的问题
                             await send_mail(task_id)
                         except Exception as e:
-                            print(e)
+                            f = traceback.format_exc()
+                            print(f'时间:{str(datetime.now())} {f}')
+                            print(f'时间:{str(datetime.now())} {e}')
                             await send_mail(task_id, 'NETWORK')
+                        # 将对应的文件夹都删掉
+                        delete_folder(task_id)
                         icem_finish = True
                         fluent_finish = True
                     elif state == 'FAILED':
@@ -244,9 +247,8 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 # 如果任务既没有成功, 也没有失败, 那么就休眠5秒后再轮询
                 await asyncio.sleep(5)
     except Exception as e:
-        import traceback
         f = traceback.format_exc()
-        print(f)
+        api_log.error(f)
         api_log.error(e)
         # 删除对应的文件夹
         delete_folder(task_id)

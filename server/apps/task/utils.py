@@ -1,4 +1,6 @@
 import os
+import traceback
+
 import pytz
 import requests
 import base64
@@ -11,6 +13,7 @@ import re
 import sys
 import yaml
 import hashlib
+import asyncio
 from glob import glob
 from datetime import datetime, timedelta
 import smtplib
@@ -419,12 +422,17 @@ def download_file(url, dest_folder, headers):
 
 
 def download_complete(file_path):
-    is_download_complete = False
-    while not is_download_complete:
-        if os.path.isfile(file_path) and FileTool.is_write_disk(file_path):
-            is_download_complete = True
-        else:
-            time.sleep(5)
+    try:
+        is_download_complete = False
+        while not is_download_complete:
+            if os.path.isfile(file_path) and FileTool.is_write_disk(file_path):
+                is_download_complete = True
+            else:
+                await asyncio.sleep(5)
+    except Exception as e:
+        api_log.error(e)
+        f = traceback.format_exc()
+        api_log.error(f)
 
 
 def create_job(task_id, task_type, md5, headers, hardware_level='middle', solver='3ddp', parallel_number=28):
