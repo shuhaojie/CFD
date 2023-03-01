@@ -1,5 +1,18 @@
 import os
 import sys
+import json
+import requests
+import subprocess
+from tortoise import Tortoise, run_async
+import datetime
+import os
+import pytz
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
+from dbs.database import TORTOISE_ORM
+from apps.models import Uknow
+from utils.constant import Status
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
@@ -29,7 +42,40 @@ async def task_widget(task_id):
     print(round(compute_price + storage_price + download_price, 2))
 
 
-if __name__ == "__main__":
-    from tortoise import Tortoise, run_async
+async def get_time():
+    await Tortoise.init(config=TORTOISE_ORM)
+    await Tortoise.generate_schemas()
+    query = await Uknow.filter(task_id='15609146-b7cf-11ed-90e2-d6ddea9e93de').first()
+    if not query.create_time:
+        total_seconds = 0
+    else:
+        total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
+            tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
+    print(total_seconds)
+    # 如果有fluent_end, 优先用这个值
+    if query.fluent_end:
+        total_seconds = (query.fluent_end - query.create_time).total_seconds()
+    # 如果fluent任务是pending, 并且时间大于3600, 此时时间应该为3600
+    elif query.fluent_status == Status.PENDING and total_seconds > 3600:
+        total_seconds = 3600
+    else:
+        # 如果Icem任务失败, 需要用Icem的时间
+        if query.icem_status == Status.FAIL:
+            if query.create_time:
+                total_seconds = (query.icem_end - query.create_time).total_seconds()
+            else:
+                total_seconds = 0
+        elif query.icem_status == Status.PENDING and total_seconds > 3600:
+            total_seconds = 3600
+        else:
+            if query.create_time:
+                total_seconds = ((datetime.datetime.now() + datetime.timedelta(hours=-8)).replace(
+                    tzinfo=pytz.timezone('UTC')) - query.create_time).total_seconds()
+            else:
+                total_seconds = 0
+    m, s = divmod(total_seconds, 60)
+    print(f'{int(m)}分{int(s)}秒')
 
-    run_async(task_widget('20221228092527001'))
+
+if __name__ == "__main__":
+    run_async(get_time())
