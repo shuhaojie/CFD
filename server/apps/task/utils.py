@@ -30,6 +30,7 @@ from utils.constant import BUSINESS, Status
 from apps.models import Token, Uknow, IcemHardware, FluentHardware
 from tortoise import Tortoise
 from dbs.database import TORTOISE_ORM, database_init
+
 minio = Minio()
 
 
@@ -308,6 +309,18 @@ class FileTool:
             current_bytes = f1.read()
             a_hash = hashlib.md5(current_bytes).hexdigest()
             return a_hash
+
+
+def delete_folder(task_id):
+    prepare_folder = os.path.join(configs.PREPARE_PATH, task_id)
+    monitor_folder = os.path.join(configs.MONITOR_PATH, task_id)
+    archive_folder = os.path.join(configs.ARCHIVE_PATH, task_id)
+    if os.path.exists(prepare_folder):
+        shutil.rmtree(prepare_folder)
+    if os.path.exists(monitor_folder):
+        shutil.rmtree(monitor_folder)
+    if os.path.exists(archive_folder):
+        shutil.rmtree(archive_folder)
 
 
 def generate_token():

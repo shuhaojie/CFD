@@ -15,7 +15,7 @@ from apps.models import Uknow, FluentProf
 from dbs.database import TORTOISE_ORM, database_init
 from utils.constant import Status
 from apps.task.utils import FileTool, get_token, download_file, upload_file, create_job, create_remote_folder, \
-    reverse_job, download_complete, task_fail, task_widget, send_mail
+    reverse_job, download_complete, task_fail, task_widget, send_mail, delete_folder
 from logs import api_log
 from utils.oss import Minio
 
@@ -43,6 +43,7 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
             icem_hardware_level=icem_hardware_level,
             fluent_hardware_level=fluent_hardware_level,
             fluent_prof=prof,
+            icem_start=datetime.now(),
             icem_status=Status.PENDING,
             data_status=Status.SUCCESS,
             order_id=order_id,
@@ -186,11 +187,8 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                             widgets=widget,
                         )
                         await Tortoise.close_connections()
-                        # 将文件夹移动到archive下进行归档
-                        archive_path = os.path.join(configs.ARCHIVE_PATH, task_id)
-                        if os.path.isdir(archive_path):
-                            shutil.rmtree(archive_path)
-                        shutil.move(file_path, configs.ARCHIVE_PATH)
+                        # 将对应的文件夹都删掉
+                        delete_folder(task_id)
                         # 发送邮件
                         try:
                             # 有可能会出现网络断开的问题
@@ -215,6 +213,8 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                         await database_init()
                         await Uknow.filter(task_id=task_id).update(widgets=widget)
                         await Tortoise.close_connections()
+                        # 删除对应的文件夹
+                        delete_folder(task_id)
                         await send_mail(task_id, task_status='FAIL', job_id=job_id)
                         icem_finish = True
                         fluent_finish = True
@@ -235,6 +235,8 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                 await database_init()
                 await Uknow.filter(task_id=task_id).update(widgets=widget)
                 await Tortoise.close_connections()
+                # 删除对应的文件夹
+                delete_folder(task_id)
                 # 结束循环
                 await send_mail(task_id, task_status='FAIL', job_id=job_id)
                 icem_finish = True
@@ -246,4 +248,5 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
         f = traceback.format_exc()
         print(f)
         api_log.error(e)
-        await asyncio.sleep(5)
+        # 删除对应的文件夹
+        delete_folder(task_id)
