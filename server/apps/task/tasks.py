@@ -115,15 +115,18 @@ async def monitor_task(task_id, md5, username, mac_address, icem_hardware_level,
                     icem_duration=float((icem_end - icem_start).seconds),
                 )
                 await Tortoise.close_connections()
+                api_log.info(f'Icem database {job_id} {task_id} inserted.')
                 url = f'{configs.SUSHI_URL}/fa/api/v0/download/jobs/job-{job_id}/output/output/fluent.msh'
                 fluent_dst_path = os.path.join(configs.PREPARE_PATH, task_id, 'fluent')
                 FileTool.make_directory(fluent_dst_path)
+                api_log.info(f'Make dictionary {job_id} {task_id} success.')
                 # 下载fluent.msh文件
                 download_file(url, fluent_dst_path, headers)
+                api_log.info(f'Download file {job_id} {task_id} success.')
                 # 等待文件下载完全下载下来
                 fluent_msh_file = os.path.join(fluent_dst_path, 'fluent.msh')
                 await download_complete(fluent_msh_file)
-                api_log.info(f'{task_id} fluent msh download success.')
+                api_log.info(f'{job_id} {task_id} fluent msh download success.')
                 # 将prof文件复制到文件夹中, 具体要根据用户的选择
                 await database_init()
                 fluent_prof_query = await FluentProf.filter(prof_name=uknow_query.fluent_prof).first()
