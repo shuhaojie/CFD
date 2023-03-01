@@ -532,6 +532,7 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     query = await Uknow.filter(task_id=task_id).first()
     await Tortoise.close_connections()
     order_id = query.order_id
+    result = query.fluent_result_file_path
     res = get_user_info(order_id)
     # 如果找不到数据, 就只发admin一个人
     if res['data']:
@@ -558,15 +559,11 @@ async def send_mail(task_id, task_status='SUCCESS', job_id=None):
     m, s = divmod(total_seconds, 60)
 
     if task_status == 'SUCCESS':
-        if res['data']:
-            subject = f'任务{task_id}成功'
-            message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n时间:{str(datetime.now())}'
-        else:
-            subject = f'任务{task_id}成功'
-            message = f'注意:该订单的操作人员没有邮箱, 请将结果发给它!\n\n订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n'
+        subject = f'任务{task_id}成功'
+        message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n任务耗时:{int(m)}分{int(s)}秒\n\n时间:{str(datetime.now())}'
     elif task_status == 'NETWORK':
         subject = f'任务{task_id}成功'
-        message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n邮件服务器网络断开, 请前往admin页面下载结果'
+        message = f'订单id:{order_id}\n\n任务id:{task_id}\n\n下载地址:{result}时间:{str(datetime.now())}'
     else:
         subject = f'任务{task_id}失败'
         if job_id is not None:
